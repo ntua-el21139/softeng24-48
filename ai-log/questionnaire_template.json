@@ -1,0 +1,23 @@
+{
+    "answers": {
+        "phase": ["design"],
+        "action": ["data design"],
+        "scope": ["data management"],
+        "action experience": 4,
+        "language": ["sql"],
+        "other language": "n/a",
+        "aimodel": ["chatgpt"],
+        "aimodel version": "4o",
+        "open source aimodel": "n/a",
+        "tool option": ["online full"],
+        "experience with tool": 4,
+        "time allocated (h)": "1",
+        "time saved estimate (h)": "0.5",
+        "quality of ai help": 4,
+        "knowledge acquired": 3,
+        "generic feeling - now": 3,
+        "generic feeling - future": 3,
+        "threat level": 3,
+        "notes": "Conversation clarified the role of enums in ER diagrams effectively."
+    }
+}
