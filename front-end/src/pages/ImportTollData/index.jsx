@@ -1,9 +1,53 @@
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import { Button, Heading, Img } from "components/ui";
-import React from "react";
+import React, { useCallback, useState } from "react";
 
 export default function ImportTollDataPage() {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.csv')) {
+      setSelectedFile(file);
+    } else {
+      alert('Please upload a CSV file');
+    }
+  }, []);
+
+  const handleFileSelect = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file && file.name.endsWith('.csv')) {
+      setSelectedFile(file);
+    } else {
+      alert('Please upload a CSV file');
+    }
+  }, []);
+
+  const handleUpload = useCallback(() => {
+    if (selectedFile) {
+      // Here you would handle the file upload to your backend
+      console.log('Uploading file:', selectedFile);
+      // Add your upload logic here
+    } else {
+      alert('Please select a file first');
+    }
+  }, [selectedFile]);
+
   return (
     <>
       <Helmet>
@@ -11,49 +55,75 @@ export default function ImportTollDataPage() {
         <meta name="description" content="Web site created using create-react-app" />
       </Helmet>
 
-      <div className="flex w-full flex-col items-center gap-[2.38rem] bg-gradient">
+      <div className="flex w-full flex-col items-center bg-gradient min-h-screen">
         {/* Header Section */}
         <Header className="self-stretch" />
 
-        {/* Main Content */}
-        <div className="mx-auto mb-[0.25rem] flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
-          <div className="flex w-[50%] flex-col items-center md:w-full">
-            {/* Image Section */}
-            <Img
-              src="images/img_i_3_2.png"
-              alt="I3one"
-              className="mx-[3.25rem] h-[13.50rem] w-full object-cover md:mx-0 md:h-auto"
-            />
+        {/* Logo Section */}
+        <div className="flex justify-center items-center py-2 mt-8">
+          <img 
+            src="/images/logo.png" 
+            alt="InterToll" 
+            className="w-[300px] h-[124px] object-contain"
+          />
+        </div>
 
+        {/* Main Content */}
+        <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem] mt-4">
+          <div className="flex w-[50%] flex-col items-center md:w-full">
             {/* Upload Box */}
-            <div className="mt-[1.88rem] flex flex-col items-center gap-[1.38rem] self-stretch rounded-[16px] border border-solid border-gray-900_75 bg-gray-100_5b px-[3.50rem] py-[3.63rem] shadow-xs md:p-[1.25rem]">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('fileInput').click()}
+              className={`mt-4 flex flex-col items-center gap-4 self-stretch rounded-[16px] border-2 border-dashed ${
+                isDragging ? 'border-[#2D7EFF] bg-[#4A4A9A]/90' : 'border-gray-900_75 bg-[#4A4A9A]'
+              } px-[3.50rem] py-8 shadow-xs md:p-[1.25rem] cursor-pointer transition-all duration-200 hover:border-[#2D7EFF]`}
+            >
+              <input
+                type="file"
+                id="fileInput"
+                accept=".csv"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              
               <Img
-                src="images/img_group_indigo_50_100x114.svg"
+                src="/images/ img_group_indigo_50_100x114.svg"
                 alt="Image"
-                className="h-[6.25rem] w-[22%] object-contain"
+                className="h-20 w-[22%] object-contain"
               />
 
-              <div className="mb-[3.13rem] flex flex-col items-center">
+              <div className="flex flex-col items-center">
                 <Heading
                   size="headingmd"
                   as="h1"
-                  className="text-[2.00rem] font-semibold md:text-[1.88rem] sm:text-[1.75rem]"
+                  className="text-[2.00rem] font-semibold text-white md:text-[1.88rem] sm:text-[1.75rem]"
                 >
-                  Drag and drop or click here
+                  {selectedFile ? selectedFile.name : "Drag and drop or click here"}
                 </Heading>
-                <Heading size="headingxs" as="h2" className="text-[1.25rem] font-semibold">
-                  to upload your CSV file
+                <Heading 
+                  size="headingxs" 
+                  as="h2" 
+                  className="text-[1.25rem] font-semibold text-white"
+                >
+                  {selectedFile ? "File selected" : "to upload your CSV file"}
                 </Heading>
               </div>
             </div>
 
             {/* Upload Button */}
-            <Button
-              shape="round"
-              className="mt-[3.13rem] w-full min-w-[15.88rem] max-w-[15.88rem] rounded-[24px] px-[2.13rem] sm:px-[1.25rem]"
-            >
-              Upload
-            </Button>
+            <div className="flex justify-center mt-8">
+              <Button
+                shape="round"
+                onClick={handleUpload}
+                className="w-32 rounded-[55px] bg-[#2D7EFF] py-2 text-white text-base font-medium shadow-lg hover:bg-[#2D7EFF]/90 focus:outline-none transition-colors"
+                disabled={!selectedFile}
+              >
+                Upload
+              </Button>
+            </div>
           </div>
         </div>
       </div>

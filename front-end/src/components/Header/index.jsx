@@ -6,21 +6,44 @@ import {
     MenubarTrigger
   } from "components/ui";
   import React from "react";
+  import { useNavigate, useLocation } from "react-router-dom";
   
   export default function Header({ ...props }) {
+    const navigate = useNavigate();
+    const location = useLocation();
+  
+    const handleHome = () => {
+      navigate('/home1');
+    };
+
+    const handleLogout = () => {
+      navigate('/');
+    };
+
+    const getTextColor = (path) => {
+      return location.pathname === path 
+        ? "text-[#2D7EFF]" 
+        : "text-white hover:text-gray-300 transition-colors cursor-pointer";
+    };
+
+    const handleNavigation = (path) => {
+      navigate(path);
+    };
+  
     return (
       <div
         {...props}
-        className={`${props.className} flex justify-center items-center py-[1.63rem] sm:py-[1.25rem] bg-black-900`}
+        className={`${props.className} w-[1440px] h-[70px] bg-[#01011F] mx-auto`}
       >
-        <div className="mx-auto flex w-full max-w-[85.50rem] items-start justify-between gap-[1.25rem] md:flex-col md:px-[1.25rem]">
+        <div className="flex items-center justify-between h-full px-8">
           <div className="flex self-center">
             <Menubar className="flex flex-wrap gap-[2.13rem] border-none">
               <MenubarMenu>
                 <MenubarTrigger>
                   <Heading
                     as="h4"
-                    className="cursor-pointer text-[1.50rem] font-semibold !text-gray-100_02 hover:!text-light_blue-a700 md:text-[1.38rem]"
+                    className={`text-[1.50rem] font-semibold ${getTextColor('/home1')} md:text-[1.38rem]`}
+                    onClick={handleHome}
                   >
                     Home
                   </Heading>
@@ -31,7 +54,8 @@ import {
                 <MenubarTrigger>
                   <Heading
                     as="h4"
-                    className="text-[1.50rem] font-semibold !text-light_blue-a700 md:text-[1.38rem]"
+                    className={`text-[1.50rem] font-semibold ${getTextColor('/importtolldata')} md:text-[1.38rem]`}
+                    onClick={() => handleNavigation('/importtolldata')}
                   >
                     Import Toll Data
                   </Heading>
@@ -42,7 +66,8 @@ import {
                 <MenubarTrigger>
                   <Heading
                     as="h4"
-                    className="cursor-pointer text-[1.50rem] font-semibold !text-gray-100_02 hover:!text-light_blue-a700 md:text-[1.38rem]"
+                    className={`text-[1.50rem] font-semibold ${getTextColor('/viewdebts')} md:text-[1.38rem]`}
+                    onClick={() => handleNavigation('/viewdebts')}
                   >
                     View Debts
                   </Heading>
@@ -53,7 +78,8 @@ import {
                 <MenubarTrigger>
                   <Heading
                     as="h4"
-                    className="cursor-pointer text-[1.50rem] font-semibold !text-gray-100_02 hover:!text-light_blue-a700 md:text-[1.38rem]"
+                    className={`text-[1.50rem] font-semibold ${getTextColor('/statistics')} md:text-[1.38rem]`}
+                    onClick={() => handleNavigation('/statistics')}
                   >
                     Statistics
                   </Heading>
@@ -64,7 +90,8 @@ import {
                 <MenubarTrigger>
                   <Heading
                     as="h4"
-                    className="cursor-pointer text-[1.50rem] font-semibold !text-gray-100_02 hover:!text-light_blue-a700 md:text-[1.38rem]"
+                    className={`text-[1.50rem] font-semibold ${getTextColor('/interactivemap')} md:text-[1.38rem]`}
+                    onClick={() => handleNavigation('/interactivemap')}
                   >
                     Interactive Map
                   </Heading>
@@ -73,13 +100,10 @@ import {
             </Menubar>
           </div>
   
-          <Heading
-            size="headingxs"
-            as="h5"
-            className="text-[1.25rem] font-semibold !text-gray-100_02"
-          >
+          <div className="text-[1.25rem] font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors"
+               onClick={handleLogout}>
             Log Out
-          </Heading>
+          </div>
         </div>
       </div>
     );
