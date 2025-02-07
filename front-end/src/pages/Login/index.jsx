@@ -1,85 +1,72 @@
-import { Helmet } from "react-helmet";
-import { Img, Button, Input, Heading } from "components/ui";
 import React from "react";
+import { Helmet } from "react-helmet";
+import { useNavigate } from "react-router-dom";
+import { Img, Button, Input } from "../../components/ui";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    navigate('/home1');
+  };
+
   return (
-    <>
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden">
       <Helmet>
-        <title>InterToll</title>
-        <meta name="description" content="Web site created using create-react-app" />
+        <title>Login - InterToll</title>
+        <meta name="description" content="Login to InterToll" />
       </Helmet>
 
-      <div className="w-full bg-gradient">
-        <div className="mt-[19.38rem] flex flex-col items-center gap-[1.13rem]">
-          <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
-            <div className="ml-[0.88rem] flex w-[96%] items-start justify-center md:ml-0 md:w-full md:flex-col">
-              
-              {/* Left Section - Tagline & Image */}
-              <div className="relative mt-[3.13rem] h-[13.50rem] flex-1 content-end md:h-auto md:w-full md:flex-none md:self-stretch">
-                <Heading
-                  size="headingxs"
-                  as="h1"
-                  className="mb-[0.38rem] ml-[4.38rem] text-[1.25rem] font-semibold md:ml-0"
-                >
-                  Connecting Highways, Simplifying Payments
-                </Heading>
-                <Img
-                  src="images/img_i_3_2.png"
-                  alt="I3two"
-                  className="absolute bottom-0 left-0 top-0 my-auto h-[13.50rem] w-[76%] object-contain"
-                />
-              </div>
+      <div className="flex flex-1 items-center justify-between px-10 z-10">
+        {/* Left side - Logo and Tagline */}
+        <div className="flex flex-col items-start ml-[126px] -mt-48">
+          <img 
+            src="/images/logo.png" 
+            alt="InterToll" 
+            className="w-[400px] h-[165px] object-contain -mb-3"
+          />
+          <p className="text-lg text-white ml-8">Connecting Highways, Simplifying Payments</p>
+        </div>
 
-              {/* Right Section - Login Form */}
-              <div className="flex w-[44%] flex-col items-end gap-[2.13rem] self-center md:w-full">
-                <a
-                  href="Login"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="ml-[9.63rem] self-start md:ml-0 md:text-[2.75rem] sm:text-[2.38rem]"
-                >
-                  <Heading
-                    size="headinglg"
-                    as="h2"
-                    className="text-[3.00rem] font-bold tracking-[0.00rem] !text-gray-100_01"
-                  >
-                    Login
-                  </Heading>
-                </a>
-
-                {/* Username Input */}
-                <Input
-                  shape="round"
-                  type="text"
-                  placeholder="Username"
-                  className="w-[70%] rounded-[32px] px-[1.50rem]"
-                />
-
-                {/* Password Input */}
-                <Input
-                  shape="round"
-                  colorScheme="indigo_800_01"
-                  type="password"
-                  placeholder="Password"
-                  className="w-[70%] rounded-[32px] px-[1.50rem] sm:px-[1.25rem]"
-                />
-
-                {/* Continue Button */}
-                <Button
-                  shape="round"
-                  className="mr-[3.75rem] w-full min-w-[15.88rem] max-w-[15.88rem] rounded-[24px] px-[2.13rem] md:mr-0 sm:px-[1.25rem]"
-                >
-                  Continue
-                </Button>
-              </div>
+        {/* Right side - Login Form */}
+        <div className="w-96 -mt-20 -ml-20">
+          <h1 className="mb-8 text-3xl font-bold text-white">Login</h1>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Input
+              type="text"
+              placeholder="Username"
+              className="w-full rounded-[55px] bg-white/5 backdrop-blur-sm px-6 py-4 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              className="w-full rounded-[55px] bg-white/5 backdrop-blur-sm px-6 py-4 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="flex justify-center">
+              <Button
+                type="submit"
+                className="w-32 rounded-[55px] bg-[#2D7EFF] py-2 text-white text-base font-medium shadow-lg hover:bg-[#2D7EFF]/90 focus:outline-none transition-colors"
+              >
+                Continue
+              </Button>
             </div>
-          </div>
-
-          {/* Footer Image */}
-          <Img src="images/img_group_73.svg" alt="Image" className="h-[21.25rem] w-full md:h-auto" />
+            <div className="text-center">
+              <a href="#" className="text-sm text-white hover:text-blue-400">Partner with Us</a>
+            </div>
+          </form>
         </div>
       </div>
-    </>
+
+      {/* Bottom Highway Illustration */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <img 
+          src="/images/Group.svg" 
+          alt="Highway" 
+          className="w-full"
+          style={{ height: '280px', objectFit: 'cover' }}
+        />
+      </div>
+    </div>
   );
 }

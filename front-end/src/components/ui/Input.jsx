@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { cn } from "lib/utils";
 import { cva } from "class-variance-authority";
 
@@ -21,18 +21,9 @@ const inputVariants = cva(
   }
 );
 
-const Input = React.forwardRef(
-  ({ variant = "fill", colorScheme = "indigo_800", shape, size = "xs", className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={cn(inputVariants({ [variant]: colorScheme, size, shape, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
+const Input = React.forwardRef(({ className, type = "text", ...props }, ref) => {
+  return <input type={type} className={className} ref={ref} {...props} />;
+});
 
 Input.displayName = "Input";
 

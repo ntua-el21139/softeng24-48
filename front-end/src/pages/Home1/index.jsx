@@ -1,9 +1,16 @@
 import { Helmet } from "react-helmet";
 import Home1Column from "./Home1Column";
-import { Heading, Menubar, MenubarContent, MenubarMenu, MenubarTrigger } from "components/ui";
+import { Heading, Menubar, MenubarContent, MenubarMenu, MenubarTrigger, Img } from "components/ui";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Home1Page() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate('/');
+  };
+
   return (
     <>
       <Helmet>
@@ -11,31 +18,30 @@ export default function Home1Page() {
         <meta name="description" content="Web site created using create-react-app" />
       </Helmet>
 
-      <div className="flex w-full flex-col gap-[2.38rem] bg-gradient">
+      <div className="flex w-full flex-col bg-gradient">
         {/* Header Section */}
-        <div className="flex items-center justify-center bg-black-900 py-[1.75rem] sm:py-[1.25rem]">
-          <div className="mx-auto flex w-full max-w-[85.50rem] items-center justify-between gap-[1.25rem] md:px-[1.25rem]">
-            <Heading as="h4" className="text-[1.50rem] font-semibold !text-gray-100_02 md:text-[1.38rem]">
+        <div className="w-[1440px] h-[70px] bg-[#01011F] mx-auto">
+          <div className="flex items-center justify-between h-full px-8">
+            <Heading as="h4" className="text-[1.50rem] font-semibold text-white md:text-[1.38rem]">
               Welcome Back: Attiki Odos
             </Heading>
 
-            <Menubar className="flex flex-wrap gap-[0.63rem] border-none">
-              <MenubarMenu>
-                <MenubarTrigger>
-                  <Heading size="headingxs" as="h5" className="text-[1.25rem] font-semibold !text-gray-100_02">
-                    Log
-                  </Heading>
-                </MenubarTrigger>
-              </MenubarMenu>
-              <MenubarMenu>
-                <MenubarTrigger>
-                  <Heading size="headingxs" as="h5" className="text-[1.25rem] font-semibold !text-gray-100_02">
-                    Out
-                  </Heading>
-                </MenubarTrigger>
-              </MenubarMenu>
-            </Menubar>
+            <div 
+              className="text-[1.25rem] font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors"
+              onClick={handleLogout}
+            >
+              Log Out
+            </div>
           </div>
+        </div>
+
+        {/* Center Logo */}
+        <div className="flex justify-center items-center py-2 mt-8">
+          <img 
+            src="/images/logo.png" 
+            alt="InterToll" 
+            className="w-[300px] h-[124px] object-contain"
+          />
         </div>
 
         {/* Main Content */}
