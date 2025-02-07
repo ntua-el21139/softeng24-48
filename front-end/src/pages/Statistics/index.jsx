@@ -11,9 +11,18 @@ export default function StatisticsPage() {
         <meta name="description" content="Web site created using create-react-app" />
       </Helmet>
 
-      <div className="flex w-full flex-col gap-[2.38rem] bg-gradient">
+      <div className="flex w-full flex-col items-center bg-gradient min-h-screen">
         {/* Header Section */}
-        <Header />
+        <Header className="self-stretch" />
+
+        {/* Logo Section */}
+        <div className="flex justify-center items-center py-2 mt-8">
+          <img 
+            src="/images/logo.png" 
+            alt="InterToll" 
+            className="w-[300px] h-[124px] object-contain"
+          />
+        </div>
 
         {/* Statistics Content */}
         <StatisticsColumn />
