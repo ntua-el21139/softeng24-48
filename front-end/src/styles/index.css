@@ -1,0 +1,26 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Roboto";
+  }
+  
+  * {
+    box-sizing: border-box;
+    line-height: normal;
+    font-family: inherit;
+    margin: unset;
+  }
+  
+  input {
+    width: 100%;
+    background-color: transparent;
+  }
+  
+  input:focus {
+    outline: none;
+  }
+  
+  a {
+    display: block;
+    text-decoration: none;
+  }
