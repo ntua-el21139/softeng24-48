@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /*------ Color Variables ------*/
+    --black_900: #01011f;
+    --black_900_01: #01012a;
+    --black_900_26: #00000026;
+    --black_900_3f: #0000003f;
+    --gray_100: #f6f6f6;
+    --gray_100_01: #f5f5f7;
+    --gray_100_02: #f6f3f3;
+    --gray_100_5b: #f6f6f65b;
+    --gray_900_75: #1a1a1a75;
+    --green_600: #29ad52;
+    --green_700: #218c42;
+    --indigo_50: #e6e6f6;
+    --indigo_800: #353581;
+    --indigo_800_01: #35358d;
+    --indigo_900: #030390;
+    --light_blue_a700: #007aff;
+    --red_700: #cc3843;
+    --red_800: #ac2d36;
+    --white_a700: #ffffff;
+
+    /*------ Shadow Variables ------*/
+    --shadow-xs: 0 0 6px 0 #00000026;
+    --shadow-sm: 0 4px 4px 0 #0000003f;
+
+    /*------ Border Radius Variables ------*/
+    --radius-xs: 16px;
+    --radius-sm: 24px;
+    --radius-md: 32px;
+
+    /*------ Spacing Variables ------*/
+    --space-xs: 0.38rem;
+    --space-sm: 1.5rem;
+    --space-md: 2.13rem;
+    --space-lg: 2.38rem;
+    --space-xl: 6.5rem;
+    --space-2xl: 8.75rem;
+  }
+
+  /* Default Input Styles */
+  [type="text"],
+  input:where(:not([type])),
+  [type="email"],
+  [type="url"],
+  [type="password"],
+  [type="number"],
+  [type="date"],
+  [type="datetime-local"],
+  [type="month"],
+  [type="search"],
+  [type="tel"],
+  [type="time"],
+  [type="week"],
+  [multiple],
+  textarea,
+  select {
+    appearance: initial;
+    background-color: initial;
+    border: initial;
+    border-width: 0;
+  }
+}
+
+@layer components {
+  /*-------------------------------------
+  Container CSS
+  --------------------------------------*/
+  .container-xs {
+    @apply w-full mx-auto max-w-[85.50rem];
+  }
+}
