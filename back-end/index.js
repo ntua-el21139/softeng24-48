@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const routes = require('./routes');  // Import the centralized router
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,17 +11,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//Import and register the tollStationPasses route and passAnalysis route
-const tollStationPassesRoutes = require('./routes/endpoints/tollStationPasses');
-app.use('/api/tollStationPasses', tollStationPassesRoutes);
-const passAnalysisRoutes = require('./routes/endpoints/passAnalysis');
-app.use('/api/passAnalysis', passAnalysisRoutes);
-const passesCostRoutes = require('./routes/endpoints/passesCost');
-app.use('/api/passesCost', passesCostRoutes);
-const chargesByRoutes = require('./routes/endpoints/chargesBy');
-app.use('/api/chargesBy', chargesByRoutes);
-
-
+// Use the centralized router for all API routes
+app.use('/api', routes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
