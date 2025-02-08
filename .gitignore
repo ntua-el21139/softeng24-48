@@ -8,12 +8,7 @@ ehthumbs.db
 Thumbs.db
 
 # Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dist/
-build/
+
 
 # Environment files
 .env
@@ -70,9 +65,7 @@ logs
 *.log
 
 # Dependencies lock files
-# Keep package-lock.json for npm consistency
-yarn.lock
-poetry.lock
+
 
 # Build outputs
 /dist
