@@ -7,7 +7,7 @@ const passAnalysis = require('./endpoints/passAnalysis');
 const passesCost = require('./endpoints/passesCost');
 const chargesBy = require('./endpoints/chargesBy');
 const healthcheck = require('./admin/healthcheck');
-const resetStations = require('./admin/resetStations');
+const resetstations = require('./admin/resetstations');
 
 // Define base paths for each route
 router.use('/tolls/passes', tollStationPasses);
@@ -15,6 +15,6 @@ router.use('/passAnalysis', passAnalysis);
 router.use('/passesCost', passesCost);
 router.use('/chargesBy', chargesBy);
 router.use('/admin/healthcheck', healthcheck);
-router.use('/admin/resetStations', resetStations);
+router.use('/admin/resetstations', resetstations);
 
 module.exports = router;

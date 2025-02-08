@@ -2,7 +2,7 @@ const pool = require('../../utils/database');
 const CSVHandler = require('../../utils/csvHandler');
 const DBHandler = require('../../utils/dbHandler');
 
-exports.resetStations = async (req, res) => {
+exports.resetstations = async (req, res) => {
     const csvHandler = new CSVHandler('back-end/csv_templates/tollstations2024.csv');
     const dbHandler = new DBHandler();
 

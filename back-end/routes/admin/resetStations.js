@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const resetStationsController = require('../../../controllers/admin/resetStationsController');
+const resetstationsController = require('../../../controllers/admin/resetstationsController');
 
-router.post('/', resetStationsController.resetStations);
+router.post('/', resetstationsController.resetstations);
 
 module.exports = router;    
