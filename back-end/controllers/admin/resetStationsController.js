@@ -3,11 +3,17 @@ const CSVHandler = require('../../utils/csvHandler');
 const DBHandler = require('../../utils/dbHandler');
 
 exports.resetstations = async (req, res) => {
-    const csvHandler = new CSVHandler('back-end/csv_templates/tollstations2024.csv');
+    const csvHandler = new CSVHandler('csv_templates/tollstations2024.csv');
     const dbHandler = new DBHandler();
 
     try {
-        // Read and process CSV
+        // Connect to database
+        await dbHandler.connect();
+        
+        // First clear Passes table
+        await dbHandler.connection.execute('DELETE FROM Passes');
+        
+        // Then process CSV and update Tolls
         const csvResult = await csvHandler.process();
         if (!csvResult.success) {
             return res.status(400).json({
@@ -16,8 +22,6 @@ exports.resetstations = async (req, res) => {
             });
         }
 
-        // Connect and insert to database
-        await dbHandler.connect();
         const dbResult = await dbHandler.insertTolls(csvResult.data);
         
         if (!dbResult.success) {
