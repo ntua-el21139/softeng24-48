@@ -1,0 +1,54 @@
+const mysql = require('mysql2/promise');
+
+//Temporary databse connection (replace with the actual connection file when ready)
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'interToll'
+});
+
+exports.getPassAnalysis = async (req, res) => {
+    try{
+        const { stationOpID, tagOpID, date_from, date_to } = req.params;
+        const requestTimestamp = new Date().toISOString();
+
+        //SQL Query: Get passes for the given stationOpID(operator_id) where 
+        //tag_home_id = tagOpID and timestamp between date_from and date_to
+        const sql = `
+            SELECT 
+                pass_id, timestamp, toll_id, tag_id, tag_home_id, operator_id, charge
+            FROM Passes
+            WHERE operator_id = ?
+              AND tag_home_id = ?
+              AND timestamp BETWEEN ? AND ?;
+        `;
+
+        //Execute query
+        const [rows] = await pool.execute(sql, [stationOpID, tagOpID, date_from, date_to]);
+
+        const passList = rows.map((row, index)=> ({
+            passIndex: index+1,
+            passID: row.pass_id,
+            stationID: row.toll_id,
+            timestamp: row.timestamp,
+            tagID: row.tag_id,
+            passCharge: row.charge
+        }));
+        
+        //Response
+        res.json({
+            stationOpID, 
+            tagOpID,
+            requestTimestamp,
+            date_from,
+            date_to,
+            nPasses: passList.length,
+            passList
+        });
+
+    }catch (error){
+        console.error("Database error:", error);
+        res.status(500).json({error: "Internal Server Error"});
+    }
+};
