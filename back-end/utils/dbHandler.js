@@ -1,23 +1,36 @@
 const mysql = require('mysql2/promise');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const moment = require('moment');
+const dbConfig = require('../config/database');
 
 class DBHandler {
   constructor() {
+    console.log('Using database configuration:', {
+      host: dbConfig.host,
+      user: dbConfig.user,
+      database: dbConfig.database
+    });
+
     this.config = {
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE
+      host: dbConfig.host,
+      user: dbConfig.user,
+      password: dbConfig.password,
+      database: dbConfig.database
     };
   }
 
   async connect() {
     try {
+      console.log('Attempting to connect with config:', {
+        host: this.config.host,
+        user: this.config.user,
+        database: this.config.database
+      });
+      
       this.connection = await mysql.createConnection(this.config);
+      console.log('Database connection successful');
       return true;
     } catch (error) {
+      console.error('Connection error details:', error);
       throw new Error(`Database connection failed: ${error.message}`);
     }
   }
