@@ -68,18 +68,13 @@ class DBHandler {
   }
 
   async formatPassRecord(record) {
-    console.log('Formatting pass record for toll_id:', record.tollID);
-    
     // First get the operator_id from Tolls table for this toll_id
     const [tollRows] = await this.connection.execute(
         'SELECT operator_id FROM Tolls WHERE toll_id = ?',
         [record.tollID]
     );
     
-    console.log('Query result for toll_id', record.tollID, ':', tollRows);
-    
     const operator_id = tollRows.length > 0 ? tollRows[0].operator_id : null;
-    console.log('Extracted operator_id:', operator_id);
     
     console.log('Raw record in formatPassRecord:', record);
     const tag_id = record.tagRef;
