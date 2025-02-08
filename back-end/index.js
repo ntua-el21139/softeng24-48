@@ -11,13 +11,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Use the centralized router for all API routes
-app.use('/api', routes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the API' });
 });
+
+// Use the centralized router for all API routes
+app.use('/api', routes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

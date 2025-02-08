@@ -1,5 +1,4 @@
 const pool = require('../../utils/database');
-const moment = require('moment');
 
 exports.getHealthcheck = async (req, res) => {
     try {
