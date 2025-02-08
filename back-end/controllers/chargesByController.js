@@ -1,12 +1,4 @@
-const mysql = require('mysql2/promise');
-
-//Temporary databse connection (replace with the actual connection file when ready)
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '123456',
-    database: 'interToll'
-});
+const pool = require('../utils/database');
 
 exports.getChargesBy = async (req, res) => {
     try {
@@ -56,6 +48,9 @@ exports.getChargesBy = async (req, res) => {
         });     
     } catch (error) {   
         console.error("Database error:", error);
-        res.status(500).json({error: "Internal Server Error"});
+        res.status(500).json({
+            status: "failed",
+            message: error.message
+        });
     }
 };

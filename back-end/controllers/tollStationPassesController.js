@@ -1,20 +1,20 @@
-const mysql = require('mysql2/promise');
-
-//Temporary databse connection (replace with the actual connection file when ready)
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '123456',
-    database: 'interToll'
-});
+const pool = require('../utils/database');
 
 exports.getTollStationPasses = async (req, res) => {
     try {
         const { tollStationID, date_from, date_to } = req.params;
-        const requestTimestamp= new Date().toISOString();
+        const requestTimestamp = new Date().toISOString();
 
-        //SQL Query: Get passes for the given tollStationID and date range
-        const sql= `
+        // First get the operator_id from Tolls table
+        const [tollStation] = await pool.execute(
+            'SELECT operator_id FROM Tolls WHERE toll_id = ?',
+            [tollStationID]
+        );
+        
+        const operator_id = tollStation.length > 0 ? tollStation[0].operator_id : null;
+
+        // Then get the passes
+        const sql = `
             SELECT 
                 pass_id, timestamp, toll_id, tag_id, tag_home_id, operator_id, charge
             FROM Passes
@@ -22,9 +22,7 @@ exports.getTollStationPasses = async (req, res) => {
               AND timestamp BETWEEN ? AND ?;
         `;
 
-        // Execute query
         const [rows] = await pool.execute(sql, [tollStationID, date_from, date_to]);
-        const operator_id = rows.length > 0 ? rows[0].operator_id : null;
 
         const passList = rows.map((row, index)=> ({
             passIndex: index+1, 
@@ -32,7 +30,7 @@ exports.getTollStationPasses = async (req, res) => {
             timestamp: row.timestamp,
             tagID: row.tag_id,
             tagProvider: row.tag_home_id,
-            passType: row.tag_home_id === row.operator_id ? "home" : "visitor",
+            passType: row.tag_home_id === operator_id ? "home" : "visitor",
             passCharge: row.charge
         }));
 
@@ -45,11 +43,13 @@ exports.getTollStationPasses = async (req, res) => {
             periodTo: date_to,
             nPasses: passList.length,
             passList
-
         });
 
     } catch (error){
         console.error("Database error:", error);
-        res.status(500).json({error: "Internal Server Error"});
+        res.status(500).json({
+            status: "failed",
+            message: error.message
+        });
     }
 };
