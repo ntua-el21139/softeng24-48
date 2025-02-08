@@ -36,12 +36,12 @@ export default function LoginPage() {
             <Input
               type="text"
               placeholder="Username"
-              className="w-full rounded-[55px] bg-white/5 backdrop-blur-sm px-6 py-4 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-[55px] bg-white/5 backdrop-blur-sm px-6 py-4 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <Input
               type="password"
               placeholder="Password"
-              className="w-full rounded-[55px] bg-white/5 backdrop-blur-sm px-6 py-4 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-[55px] bg-white/5 backdrop-blur-sm px-6 py-4 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <div className="flex justify-center">
               <Button
