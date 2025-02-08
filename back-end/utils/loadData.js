@@ -1,9 +1,11 @@
+const path = require('path');
 const CSVHandler = require('./csvHandler');
 const DBHandler = require('./dbHandler');
+require('../config/database');  // This will ensure .env is loaded
 
 // CSV file paths
-const TOLL_STATIONS_CSV = 'csv_templates/tollstations2024.csv';
-const PASSES_CSV = 'csv_templates/passes-sample.csv';
+const TOLL_STATIONS_CSV = path.join(__dirname, '../csv_templates/tollstations2024.csv');
+const PASSES_CSV = path.join(__dirname, '../csv_templates/passes-sample.csv');
 
 async function loadTollStations() {
   const csvHandler = new CSVHandler(TOLL_STATIONS_CSV);
