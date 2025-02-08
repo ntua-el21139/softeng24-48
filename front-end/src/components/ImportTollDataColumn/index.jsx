@@ -17,6 +17,8 @@ export default function ImportTollDataColumn({
       navigate('/viewdebts');
     } else if (importTitle === "Statistics") {
       navigate('/statistics');
+    } else if (importTitle === "Interactive Map") {
+      navigate('/interactivemap');
     }
   };
 
