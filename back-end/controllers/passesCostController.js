@@ -8,16 +8,16 @@ const pool = mysql.createPool({
     database: 'interToll'
 });
 
-exports.getPassAnalysis = async (req, res) => {
-    try{
-        const { stationOpID, tagOpID, date_from, date_to } = req.params;
+exports.getPassesCost = async (req, res) => {
+    try {
+        const { tollOpID, tagOpID, date_from, date_to } = req.params;
         const requestTimestamp = new Date().toISOString();
 
-        //SQL Query: Get passes for the given stationOpID(operator_id) where 
-        //tag_home_id = tagOpID and timestamp between date_from and date_to
+        //SQL Query: Get passes for the given tollOpID and tagOpID where 
+        //timestamp between date_from and date_to
         const sql = `
             SELECT 
-                pass_id, timestamp, toll_id, tag_id, tag_home_id, operator_id, charge
+                charge
             FROM Passes
             WHERE operator_id = ?
               AND tag_home_id = ?
@@ -25,30 +25,22 @@ exports.getPassAnalysis = async (req, res) => {
         `;
 
         //Execute query
-        const [rows] = await pool.execute(sql, [stationOpID, tagOpID, date_from, date_to]);
-
-        const passList = rows.map((row, index)=> ({
-            passIndex: index+1,
-            passID: row.pass_id,
-            stationID: row.toll_id,
-            timestamp: row.timestamp,
-            tagID: row.tag_id,
-            passCharge: row.charge
-        }));
+        const [rows] = await pool.execute(sql, [tollOpID, tagOpID, date_from, date_to]);
+        const totalCost = rows.reduce((sum, row) => sum + row.charge, 0);
         
         //Response
         res.json({
-            stationOpID: stationOpID, 
+            tollOpID: tollOpID,
             tagOpID: tagOpID,
             requestTimestamp: requestTimestamp,
             periodFrom: date_from,
             periodTo: date_to,
-            nPasses: passList.length,
-            passList
+            nPasses: rows.length,
+            passesCost: totalCost
 
         });
-
-    }catch (error){
+        
+    } catch (error) {
         console.error("Database error:", error);
         res.status(500).json({error: "Internal Server Error"});
     }

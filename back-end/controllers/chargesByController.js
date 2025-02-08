@@ -1,0 +1,61 @@
+const mysql = require('mysql2/promise');
+
+//Temporary databse connection (replace with the actual connection file when ready)
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'interToll'
+});
+
+exports.getChargesBy = async (req, res) => {
+    try {
+        const { tollOpID, date_from, date_to } = req.params;
+        const requestTimestamp = new Date().toISOString();
+
+        //SQL Query: Get charges for the given tollOpID where 
+        //timestamp between date_from and date_to
+        const sql = `
+            SELECT 
+                charge, tag_home_id
+            FROM Passes
+            WHERE operator_id = ?
+              AND timestamp BETWEEN ? AND ?;
+        `;
+
+        //Execute query
+        const [rows] = await pool.execute(sql, [tollOpID, date_from, date_to]);
+        
+        const vOpList = Object.entries(
+            rows.reduce((acc, row) => {
+                if (row.tag_home_id === tollOpID) return acc;
+                
+                if (!acc[row.tag_home_id]) {
+                    acc[row.tag_home_id] = {
+                        count: 0,
+                        totalCharge: 0
+                    };
+                }
+                acc[row.tag_home_id].count++;
+                acc[row.tag_home_id].totalCharge += row.charge;
+                return acc;
+            }, {})
+        ).map(([visitingOpID, data]) => ({
+            visitingOpID,
+            nPasses: data.count,
+            passesCost: data.totalCharge
+        }));
+
+        //Response
+        res.json({
+            tollOpID: tollOpID,
+            requestTimestamp: requestTimestamp,
+            periodFrom: date_from,
+            periodTo: date_to,
+            vOpList
+        });     
+    } catch (error) {   
+        console.error("Database error:", error);
+        res.status(500).json({error: "Internal Server Error"});
+    }
+};

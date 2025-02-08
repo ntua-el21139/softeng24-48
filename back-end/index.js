@@ -13,9 +13,11 @@ app.use(express.urlencoded({ extended: true }));
 //Import and register the tollStationPasses route and passAnalysis route
 const tollStationPassesRoutes = require('./routes/endpoints/tollStationPasses');
 app.use('/api/tollStationPasses', tollStationPassesRoutes);
-
 const passAnalysisRoutes = require('./routes/endpoints/passAnalysis');
 app.use('/api/passAnalysis', passAnalysisRoutes);
+const passesCostRoutes = require('./routes/endpoints/passesCost');
+app.use('/api/passesCost', passesCostRoutes);
+
 
 // Basic route for testing
 app.get('/', (req, res) => {

@@ -38,13 +38,14 @@ exports.getTollStationPasses = async (req, res) => {
 
         //Response
         res.json({
-            tollStationID,
-            operatorID: operator_id,
-            requestTimestamp,
-            date_from,
-            date_to,
+            StationID: tollStationID,
+            stationOperator: operator_id,
+            requestTimestamp: requestTimestamp,
+            periodFrom: date_from,
+            periodTo: date_to,
             nPasses: passList.length,
             passList
+
         });
 
     } catch (error){
