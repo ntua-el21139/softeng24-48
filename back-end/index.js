@@ -10,9 +10,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//Import and register the tollStationPasses route
+//Import and register the tollStationPasses route and passAnalysis route
 const tollStationPassesRoutes = require('./routes/endpoints/tollStationPasses');
 app.use('/api/tollStationPasses', tollStationPassesRoutes);
+
+const passAnalysisRoutes = require('./routes/endpoints/passAnalysis');
+app.use('/api/passAnalysis', passAnalysisRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {

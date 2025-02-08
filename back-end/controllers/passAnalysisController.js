@@ -8,38 +8,38 @@ const pool = mysql.createPool({
     database: 'interToll'
 });
 
-exports.getTollStationPasses = async (req, res) => {
-    try {
-        const { tollStationID, date_from, date_to } = req.params;
-        const requestTimestamp= new Date().toISOString();
+exports.getPassAnalysis = async (req, res) => {
+    try{
+        const { stationOpID, tagOpID, date_from, date_to } = req.params;
+        const requestTimestamp = new Date().toISOString();
 
-        //SQL Query: Get passes for the given tollStationID and date range
-        const sql= `
+        //SQL Query: Get passes for the given stationOpID(operator_id) where 
+        //tag_home_id = tagOpID and timestamp between date_from and date_to
+        const sql = `
             SELECT 
                 pass_id, timestamp, toll_id, tag_id, tag_home_id, operator_id, charge
             FROM Passes
-            WHERE toll_id = ?
+            WHERE operator_id = ?
+              AND tag_home_id = ?
               AND timestamp BETWEEN ? AND ?;
         `;
 
-        // Execute query
-        const [rows] = await pool.execute(sql, [tollStationID, date_from, date_to]);
-        const operator_id = rows.length > 0 ? rows[0].operator_id : null;
+        //Execute query
+        const [rows] = await pool.execute(sql, [stationOpID, tagOpID, date_from, date_to]);
 
         const passList = rows.map((row, index)=> ({
-            passIndex: index+1, 
+            passIndex: index+1,
             passID: row.pass_id,
+            stationID: row.toll_id,
             timestamp: row.timestamp,
             tagID: row.tag_id,
-            tagProvider: row.tag_home_id,
-            passType: row.tag_home_id === row.operator_id ? "home" : "visitor",
             passCharge: row.charge
         }));
-
+        
         //Response
         res.json({
-            tollStationID,
-            operatorID: operator_id,
+            stationOpID, 
+            tagOpID,
             requestTimestamp,
             date_from,
             date_to,
@@ -47,7 +47,7 @@ exports.getTollStationPasses = async (req, res) => {
             passList
         });
 
-    } catch (error){
+    }catch (error){
         console.error("Database error:", error);
         res.status(500).json({error: "Internal Server Error"});
     }
