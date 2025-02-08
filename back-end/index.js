@@ -17,6 +17,9 @@ const passAnalysisRoutes = require('./routes/endpoints/passAnalysis');
 app.use('/api/passAnalysis', passAnalysisRoutes);
 const passesCostRoutes = require('./routes/endpoints/passesCost');
 app.use('/api/passesCost', passesCostRoutes);
+const chargesByRoutes = require('./routes/endpoints/chargesBy');
+app.use('/api/chargesBy', chargesByRoutes);
+
 
 
 // Basic route for testing
