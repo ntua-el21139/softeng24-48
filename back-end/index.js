@@ -10,6 +10,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//Import and register the tollStationPasses route
+const tollStationPassesRoutes = require('./routes/endpoints/tollStationPasses');
+app.use('/api/tollStationPasses', tollStationPassesRoutes);
+
 // Basic route for testing
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the API!' });
