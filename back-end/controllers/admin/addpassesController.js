@@ -27,7 +27,6 @@ exports.addpasses = async (req, res) => {
 
         // First extract unique toll_ids from CSV data
         const tollIds = [...new Set(csvResult.data.map(row => row.tollID))];
-        console.log('Toll IDs from CSV:', tollIds);
 
         // Then construct the query
         const tollOperatorQuery = `
@@ -37,17 +36,11 @@ exports.addpasses = async (req, res) => {
         
         const [tollOperators] = await dbHandler.connection.execute(tollOperatorQuery, tollIds);
         
-        // Debug logging
-        console.log('Found toll operators:', tollOperators);
-        
         // Create a map for quick lookup
         const operatorMap = {};
         tollOperators.forEach(row => {
             operatorMap[row.toll_id] = row.operator_id;
         });
-
-        // Debug logging
-        console.log('Operator Map:', operatorMap);
 
         // Check if all toll stations exist
         const missingTolls = tollIds.filter(id => !operatorMap[id]);
