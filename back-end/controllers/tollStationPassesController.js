@@ -4,7 +4,23 @@ const moment = require('moment');
 exports.getTollStationPasses = async (req, res) => {
     try {
         const { tollStationID, date_from, date_to } = req.params;
-        const requestTimestamp = moment().format('YYYY-MM-DD HH:mm');
+
+        // Check if any required parameters are missing
+        if (!tollStationID || !date_from || !date_to) {
+            return res.status(400).json({
+                status: "failed",
+                message: "Missing required parameters"
+            });
+        }
+
+        // Validate date format
+        if (!moment(date_from, 'YYYY-MM-DD', true).isValid() || 
+            !moment(date_to, 'YYYY-MM-DD', true).isValid()) {
+            return res.status(400).json({
+                status: "failed",
+                message: "Invalid date format. Use YYYY-MM-DD"
+            });
+        }
 
         // First get the operator_id from Tolls table
         const [tollStation] = await pool.execute(
@@ -12,9 +28,17 @@ exports.getTollStationPasses = async (req, res) => {
             [tollStationID]
         );
         
-        const operator_id = tollStation.length > 0 ? tollStation[0].operator_id : null;
+        // Check if station exists
+        if (tollStation.length === 0) {
+            return res.status(400).json({
+                status: "failed",
+                message: "Station not found"
+            });
+        }
 
-        // Then get the passes
+        const operator_id = tollStation[0].operator_id;
+
+        // Get the passes
         const sql = `
             SELECT 
                 pass_id, timestamp, toll_id, tag_id, tag_home_id, operator_id, charge
@@ -26,6 +50,14 @@ exports.getTollStationPasses = async (req, res) => {
 
         const [rows] = await pool.execute(sql, [tollStationID, date_from, date_to]);
 
+        // Check if any passes found
+        if (rows.length === 0) {
+            return res.status(204).json({
+                status: "failed",
+                message: "No passes found for given station and time period"
+            });
+        }
+
         const passList = rows.map((row, index)=> ({
             passIndex: index+1, 
             passID: row.pass_id,
@@ -36,11 +68,11 @@ exports.getTollStationPasses = async (req, res) => {
             passCharge: row.charge
         }));
 
-        //Response
+        // Successful response
         res.json({
             StationID: tollStationID,
             stationOperator: operator_id,
-            requestTimestamp: requestTimestamp,
+            requestTimestamp: moment().format('YYYY-MM-DD HH:mm'),
             periodFrom: date_from,
             periodTo: date_to,
             nPasses: passList.length,
@@ -51,7 +83,7 @@ exports.getTollStationPasses = async (req, res) => {
         console.error("Database error:", error);
         res.status(500).json({
             status: "failed",
-            message: error.message
+            message: "Internal server error"
         });
     }
 };
