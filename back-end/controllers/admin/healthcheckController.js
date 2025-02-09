@@ -2,22 +2,15 @@ const pool = require('../../utils/database');
 
 exports.getHealthcheck = async (req, res) => {
     try {
-        const sql1 = `
-            SELECT COUNT(*) as n_stations
-            FROM Tolls
-        `;
-        const sql2 = `
-            SELECT COUNT(DISTINCT tag_id) as n_tags
-            FROM Passes
-        `;
-        const sql3 = `
-            SELECT COUNT(*) as n_passes
-            FROM Passes
-        `;
+        const connection = await pool.getConnection();
+        
+        const [[tollCount], [tagCount], [passCount]] = await Promise.all([
+            connection.execute('SELECT COUNT(*) as n_stations FROM Tolls'),
+            connection.execute('SELECT COUNT(DISTINCT tag_id) as n_tags FROM Passes'),
+            connection.execute('SELECT COUNT(*) as n_passes FROM Passes')
+        ]);
 
-        const [tollCount] = await pool.execute(sql1);
-        const [tagCount] = await pool.execute(sql2);
-        const [passCount] = await pool.execute(sql3);
+        connection.release();
 
         //Response
         res.json({
