@@ -3,7 +3,7 @@ const moment = require('moment');
 exports.getPassesCost = async (req, res) => {
     try {
         const { tollOpID, tagOpID, date_from, date_to } = req.params;
-        const requestTimestamp = new Date().toISOString();
+        const requestTimestamp = moment().format('YYYY-MM-DD HH:mm');
 
         //SQL Query: Get passes for the given tollOpID and tagOpID where 
         //timestamp between date_from and date_to
@@ -13,7 +13,8 @@ exports.getPassesCost = async (req, res) => {
             FROM Passes
             WHERE operator_id = ?
               AND tag_home_id = ?
-              AND timestamp BETWEEN ? AND ?;
+              AND timestamp BETWEEN ? AND ?
+            ORDER BY timestamp ASC;
         `;
 
         //Execute query

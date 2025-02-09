@@ -4,7 +4,7 @@ const moment = require('moment');
 exports.getTollStationPasses = async (req, res) => {
     try {
         const { tollStationID, date_from, date_to } = req.params;
-        const requestTimestamp = new Date().toISOString();
+        const requestTimestamp = moment().format('YYYY-MM-DD HH:mm');
 
         // First get the operator_id from Tolls table
         const [tollStation] = await pool.execute(
@@ -20,7 +20,8 @@ exports.getTollStationPasses = async (req, res) => {
                 pass_id, timestamp, toll_id, tag_id, tag_home_id, operator_id, charge
             FROM Passes
             WHERE toll_id = ?
-              AND timestamp BETWEEN ? AND ?;
+              AND timestamp BETWEEN ? AND ?
+            ORDER BY timestamp ASC;
         `;
 
         const [rows] = await pool.execute(sql, [tollStationID, date_from, date_to]);
@@ -28,7 +29,7 @@ exports.getTollStationPasses = async (req, res) => {
         const passList = rows.map((row, index)=> ({
             passIndex: index+1, 
             passID: row.pass_id,
-            timestamp: row.timestamp,
+            timestamp: moment(row.timestamp).format('YYYY-MM-DD HH:mm'),
             tagID: row.tag_id,
             tagProvider: row.tag_home_id,
             passType: row.tag_home_id === operator_id ? "home" : "visitor",

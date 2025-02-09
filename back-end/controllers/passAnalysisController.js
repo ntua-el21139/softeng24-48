@@ -4,7 +4,7 @@ const moment = require('moment');
 exports.getPassAnalysis = async (req, res) => {
     try {
         const { stationOpID, tagOpID, date_from, date_to } = req.params;
-        const requestTimestamp = new Date().toISOString();
+        const requestTimestamp = moment().format('YYYY-MM-DD HH:mm');
 
         //SQL Query: Get passes for the given stationOpID(operator_id) where 
         //tag_home_id = tagOpID and timestamp between date_from and date_to
@@ -14,7 +14,8 @@ exports.getPassAnalysis = async (req, res) => {
             FROM Passes
             WHERE operator_id = ?
               AND tag_home_id = ?
-              AND timestamp BETWEEN ? AND ?;
+              AND timestamp BETWEEN ? AND ?
+            ORDER BY timestamp ASC;
         `;
 
         //Execute query
@@ -24,7 +25,7 @@ exports.getPassAnalysis = async (req, res) => {
             passIndex: index+1,
             passID: row.pass_id,
             stationID: row.toll_id,
-            timestamp: row.timestamp,
+            timestamp: moment(row.timestamp).format('YYYY-MM-DD HH:mm'),
             tagID: row.tag_id,
             passCharge: row.charge
         }));
