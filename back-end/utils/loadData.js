@@ -1,3 +1,4 @@
+import { parse } from 'csv-parse'
 const CSVHandler = require('./csvHandler');
 const DBHandler = require('./dbHandler');
 
