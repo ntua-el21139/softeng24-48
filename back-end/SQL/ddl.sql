@@ -42,7 +42,7 @@ CREATE TABLE Tolls (
     longt VARCHAR(50),
     email VARCHAR(50),
     price DOUBLE(4,2)
-    #FOREIGN KEY (operator_id) REFERENCES Users(operator_id)  -- This now correctly references Users table
+    --FOREIGN KEY (operator_id) REFERENCES Users(operator_id)  -- This now correctly references Users table
 );
 
 CREATE TABLE Passes (
@@ -57,5 +57,5 @@ CREATE TABLE Passes (
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     -- Temporarily commenting out this constraint until Users table is populated
-    -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
+   --FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
 );
