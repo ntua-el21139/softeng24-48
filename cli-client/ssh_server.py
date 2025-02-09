@@ -181,37 +181,63 @@ def read_command(channel):
     
     return line.strip()
 
-def start_server(port=2222, key_file=None):
+def start_server(port=2222, key_file=None, host='0.0.0.0'):
     """Start the SSH server"""
-    
-    # Generate or load host key
     global host_key
     if key_file and os.path.exists(key_file):
         host_key = paramiko.RSAKey(filename=key_file)
+        print(f"Loaded existing host key from {key_file}")
     else:
         host_key = paramiko.RSAKey.generate(2048)
         if key_file:
             host_key.write_private_key_file(key_file)
+            print(f"Generated new host key and saved to {key_file}")
     
-    # Create socket
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', port))
+        sock.bind((host, port))
+        print(f"Successfully bound to {host}:{port}")
     except Exception as e:
         print(f'*** Bind failed: {str(e)}')
         sys.exit(1)
 
-    # Start listening
     try:
         sock.listen(100)
-        print(f'Listening for connections on port {port}...')
+        print(f'Listening for connections on {host}:{port}...')
+        
+        # Get all available IP addresses
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        print(f'Hostname: {hostname}')
+        print(f'Local IP address: {local_ip}')
+        
+        # Try to get all network interfaces
+        try:
+            import netifaces
+            print("\nAvailable network interfaces:")
+            for interface in netifaces.interfaces():
+                addrs = netifaces.ifaddresses(interface)
+                if netifaces.AF_INET in addrs:
+                    for addr in addrs[netifaces.AF_INET]:
+                        print(f"Interface {interface}: {addr['addr']}")
+        except ImportError:
+            print("Install 'netifaces' package for detailed network interface information")
+        
+        print('\nConnection instructions:')
+        print(f'1. From this machine: ssh -p {port} username@localhost')
+        print(f'2. From local network: ssh -p {port} username@{local_ip}')
+        print('Note: Any username/password combination will work for testing')
         
         while True:
-            client, addr = sock.accept()
-            thread = threading.Thread(target=handle_client, args=(client, addr))
-            thread.daemon = True
-            thread.start()
+            try:
+                client, addr = sock.accept()
+                print(f"\nNew connection attempt from {addr[0]}:{addr[1]}")
+                thread = threading.Thread(target=handle_client, args=(client, addr))
+                thread.daemon = True
+                thread.start()
+            except Exception as e:
+                print(f"Error accepting connection: {e}")
             
     except KeyboardInterrupt:
         print('\nServer shutting down...')
@@ -224,5 +250,13 @@ def start_server(port=2222, key_file=None):
         pass
 
 if __name__ == '__main__':
-    # You can specify a key file to persist the host key
-    start_server(port=2222, key_file='ssh_host_key') 
+    # Add netifaces to requirements.txt
+    try:
+        import netifaces
+    except ImportError:
+        print("Installing netifaces package...")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "netifaces"])
+        import netifaces
+    
+    start_server(port=2222, key_file='ssh_host_key', host='0.0.0.0') 
