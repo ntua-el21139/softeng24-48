@@ -126,12 +126,17 @@ def handle_client(client, addr):
                                 else:
                                     print("Commands must start with 'se2448'")
                                 output_catcher.flush()
-                            
-                            # After command execution, show menu and return to main prompt
-                            print("\n")
-                            for line in cli.intro.split('\n'):
-                                print(line)
-                            break  # Return to main menu
+                                
+                                # Add "press any key" prompt - only use print()
+                                print("\nPress any key to return to main menu...")
+                                # Wait for any key press
+                                channel.recv(1)
+                                
+                                # After key press, show menu
+                                print("\n")
+                                for line in cli.intro.split('\n'):
+                                    print(line)
+                                break  # Return to main menu
                     else:
                         cli.onecmd(initial_cmd)
                         output_catcher.flush()
@@ -196,8 +201,13 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.bind((host, port))
         print(f"Successfully bound to {host}:{port}")
+        
+        sock_name = sock.getsockname()
+        print(f"Socket bound to: {sock_name[0]}:{sock_name[1]}")
+        
     except Exception as e:
         print(f'*** Bind failed: {str(e)}')
         sys.exit(1)
@@ -206,13 +216,9 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
         sock.listen(100)
         print(f'Listening for connections on {host}:{port}...')
         
-        # Get all available IP addresses
         hostname = socket.gethostname()
         local_ip = socket.gethostbyname(hostname)
-        print(f'Hostname: {hostname}')
-        print(f'Local IP address: {local_ip}')
         
-        # Try to get all network interfaces
         try:
             import netifaces
             print("\nAvailable network interfaces:")
@@ -220,14 +226,23 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
                 addrs = netifaces.ifaddresses(interface)
                 if netifaces.AF_INET in addrs:
                     for addr in addrs[netifaces.AF_INET]:
-                        print(f"Interface {interface}: {addr['addr']}")
+                        ip = addr['addr']
+                        print(f"Interface {interface}: {ip}")
+                        if ip.startswith(('192.168.', '10.', '172.')):
+                            print(f"*** Use this IP for LAN connections: {ip}")
         except ImportError:
             print("Install 'netifaces' package for detailed network interface information")
         
         print('\nConnection instructions:')
         print(f'1. From this machine: ssh -p {port} username@localhost')
-        print(f'2. From local network: ssh -p {port} username@{local_ip}')
+        print(f'2. From local network: ssh -p {port} username@<LAN_IP>')
         print('Note: Any username/password combination will work for testing')
+        print('\nTroubleshooting:')
+        print('1. Make sure your firewall allows incoming connections on port 2222')
+        print('2. Try these commands to allow Python through the firewall:')
+        print('   macOS: sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add $(which python3)')
+        print('   Linux: sudo ufw allow 2222/tcp')
+        print('3. Or temporarily disable firewall for testing')
         
         while True:
             try:
@@ -243,11 +258,11 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
         print('\nServer shutting down...')
     except Exception as e:
         print(f'*** Listen/accept failed: {str(e)}')
-    
-    try:
-        sock.close()
-    except:
-        pass
+    finally:
+        try:
+            sock.close()
+        except:
+            pass
 
 if __name__ == '__main__':
     # Add netifaces to requirements.txt
