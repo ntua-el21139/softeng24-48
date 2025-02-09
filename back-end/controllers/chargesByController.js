@@ -26,7 +26,7 @@ exports.getChargesBy = async (req, res) => {
 
         // Check if operator exists
         const [operator] = await pool.execute(
-            'SELECT operator_id FROM Operators WHERE operator_id = ?',
+            'SELECT DISTINCT operator_id FROM Passes WHERE operator_id = ?',
             [tollOpID]
         );
 

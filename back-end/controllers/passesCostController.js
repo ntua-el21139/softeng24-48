@@ -23,9 +23,9 @@ exports.getPassesCost = async (req, res) => {
             });
         }
 
-        // Check if operators exist
+        // Check if both operators exist
         const [operators] = await pool.execute(
-            'SELECT operator_id FROM Operators WHERE operator_id IN (?, ?)',
+            'SELECT DISTINCT operator_id FROM Passes WHERE operator_id IN (?, ?)',
             [tollOpID, tagOpID]
         );
 
