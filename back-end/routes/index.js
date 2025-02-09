@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, isAdmin } = require('../middleware/auth');
+//const { verifyToken, isAdmin } = require('../middleware/auth');
 
 // Import routes
 const tollStationPasses = require('./endpoints/tollStationPasses');
@@ -17,6 +17,6 @@ router.use('/passAnalysis', passAnalysis);
 router.use('/passesCost', passesCost);
 router.use('/chargesBy', chargesBy);
 router.use('/admin/healthcheck', healthcheck);
-router.use('/admin/resetstations', verifyToken, isAdmin, resetstations);
-router.use('/admin/resetpasses', verifyToken, isAdmin, resetpasses);
+router.use('/admin/resetstations', resetstations);
+router.use('/admin/resetpasses', resetpasses);
 module.exports = router;
