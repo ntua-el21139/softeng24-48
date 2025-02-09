@@ -8,6 +8,7 @@ import cmd
 from api_client import APIClient
 import requests
 import config
+import os
 
 class InterTollCLI(cmd.Cmd):
     intro = """
@@ -16,7 +17,7 @@ class InterTollCLI(cmd.Cmd):
     ║----------------------------------------║
     ║  1. Run commands (se2448 scope ...)    ║
     ║  2. Show help page                     ║
-    ║  3. Exit                              ║
+    ║  3. Exit                               ║
     ╚════════════════════════════════════════╝
     """
     prompt = 'InterToll> '
@@ -84,6 +85,8 @@ class InterTollCLI(cmd.Cmd):
                 handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
             elif scope == 'chargesby':
                 handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif scope == 'admin':
+                handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
             else:
                 print(f"Unknown scope: {scope}")
                 print_help()
@@ -484,17 +487,65 @@ def handle_chargesby(base_url, endpoints, options):
     except requests.exceptions.RequestException as e:
         print(f"Error connecting to server: {e}")
 
+def parse_admin_options(options):
+    """Parse admin command options"""
+    command = None
+    source = None
+
+    i = 0
+    while i < len(options):
+        if options[i] == '--addpasses':
+            command = 'addpasses'
+            i += 1
+        elif options[i] == '--source' and i + 1 < len(options):
+            source = options[i + 1]
+            i += 2
+        else:
+            i += 1
+
+    if command == 'addpasses' and not source:
+        raise ValueError("Source file path is required (--source)")
+
+    return command, source
+
+def handle_admin(base_url, endpoints, options):
+    """Handle the admin command"""
+    try:
+        command, source = parse_admin_options(options)
+        
+        if command == 'addpasses':
+            print(f"\n📤 Uploading passes from {source}")
+            print("------------------------")
+            
+            api_client = APIClient()
+            result = api_client.addpasses(source)
+            
+            if result.get('status') == 'OK':
+                print("\n✅ Success: Passes added successfully")
+            else:
+                print("\n❌ Error:")
+                if 'message' in result:
+                    print(f"Message: {result['message']}")
+                if 'info' in result:
+                    print(f"Info: {result['info']}")
+        else:
+            print("Unknown admin command. Available commands: --addpasses")
+            
+    except FileNotFoundError:
+        print(f"❌ Error: File not found: {source}")
+    except json.JSONDecodeError:
+        print("❌ Error: Invalid response from server")
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+
 def main():
-    # Get command line arguments
     args = sys.argv[1:]
     
-    # If no arguments, start interactive mode
     if not args:
         try:
             InterTollCLI().cmdloop()
         except KeyboardInterrupt:
             print("\nGoodbye!")
-    # Handle direct command line usage
     else:
         command = args[0]
         if command == 'healthcheck':
@@ -507,8 +558,9 @@ def main():
             handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
         elif command == 'chargesby':
             handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+        elif command == 'admin':
+            handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
         else:
-            # Handle other commands or show help
             print_help()
 
 if __name__ == '__main__':

@@ -69,4 +69,35 @@ class APIClient:
         except requests.exceptions.RequestException as e:
             print(f"Error connecting to server: {e}")
 
+    def addpasses(self, file_path):
+        """Upload passes from CSV file"""
+        try:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"File not found: {file_path}")
+            
+            if not file_path.lower().endswith('.csv'):
+                raise ValueError("File must be a CSV file")
+            
+            # Open the file in binary mode and create the files dict
+            with open(file_path, 'rb') as file:
+                files = {
+                    'file': (os.path.basename(file_path), file, 'text/csv')
+                }
+                
+                # Use the correct endpoint path from config
+                url = f"{self.base_url}{ENDPOINTS['admin']['addpasses']}"
+                print(f"Sending request to: {url}")
+                
+                response = self.session.post(url, files=files)
+                return response.json()
+        
+        except FileNotFoundError as e:
+            raise Exception(f"File error: {str(e)}")
+        except ValueError as e:
+            raise Exception(f"Invalid file: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"API Error: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Error uploading passes: {str(e)}")
+
 # Remove the standalone command handling code 
