@@ -28,18 +28,23 @@ class InterTollCLI(cmd.Cmd):
 
     def do_1(self, arg):
         """Run CLI commands"""
-        print("\nEnter your command after the prompt below.")
-        print("Example formats:")
-        print("  se2448 healthcheck")
-        print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131\n")
-        
-        command = input("Enter your command: ")
-        if command.strip():
-            args = command.split()
-            if args[0] == 'se2448':
-                self.handle_command(args[1:])
-            else:
-                print("Commands must start with 'se2448'")
+        while True:  # Add loop to keep showing command prompt
+            print("\nEnter your command after the prompt below.")
+            print("Example formats:")
+            print("  se2448 healthcheck")
+            print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131\n")
+            
+            command = input("Enter your command: ")
+            if command.strip():
+                args = command.split()
+                if args[0] == 'se2448':
+                    self.handle_command(args[1:])
+                else:
+                    print("Commands must start with 'se2448'")
+            
+            # After command execution, show menu and ask if user wants to continue
+            print("\n" + self.intro)
+            break  # Return to main menu
 
     def do_2(self, arg):
         """Show help page"""
@@ -561,7 +566,7 @@ def main():
         elif command == 'admin':
             handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
         else:
-            print_help()
+            print_help() 
 
 if __name__ == '__main__':
     main() 
