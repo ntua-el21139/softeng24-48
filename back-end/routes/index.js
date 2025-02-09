@@ -3,7 +3,6 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
 // Import routes
-const auth = require('./auth');
 const tollStationPasses = require('./endpoints/tollStationPasses');
 const passAnalysis = require('./endpoints/passAnalysis');
 const passesCost = require('./endpoints/passesCost');
