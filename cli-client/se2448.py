@@ -42,7 +42,25 @@ class InterTollCLI(cmd.Cmd):
                 else:
                     print("Commands must start with 'se2448'")
             
-            # After command execution, show menu and ask if user wants to continue
+            # Add "press any key" prompt
+            print("\nPress any key to return to main menu...")
+            # Wait for any key press
+            try:
+                # For Windows
+                import msvcrt
+                msvcrt.getch()
+            except ImportError:
+                # For Unix/Linux/MacOS
+                import sys, tty, termios
+                fd = sys.stdin.fileno()
+                old_settings = termios.tcgetattr(fd)
+                try:
+                    tty.setraw(sys.stdin.fileno())
+                    sys.stdin.read(1)
+                finally:
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            
+            # After key press, show menu
             print("\n" + self.intro)
             break  # Return to main menu
 
