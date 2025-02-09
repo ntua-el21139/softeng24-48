@@ -4,7 +4,6 @@ const pool = require('../../utils/database');
 
 exports.addpasses = async (req, res) => {
     const dbHandler = new DBHandler();
-    let connection;
     
     try {
         if (!req.file) {
@@ -14,7 +13,7 @@ exports.addpasses = async (req, res) => {
             });
         }
         
-        connection = await dbHandler.connect();
+        await dbHandler.connect();  // Just await the connection
         const csvHandler = new CSVHandler(req.file.path);
         
         // Process the CSV file
@@ -26,22 +25,29 @@ exports.addpasses = async (req, res) => {
             });
         }
 
-        // First get operator_ids for all toll_ids
+        // First extract unique toll_ids from CSV data
+        const tollIds = [...new Set(csvResult.data.map(row => row.tollID))];
+        console.log('Toll IDs from CSV:', tollIds);
+
+        // Then construct the query
         const tollOperatorQuery = `
             SELECT toll_id, operator_id 
             FROM Tolls 
-            WHERE toll_id IN (?)
-        `;
+            WHERE toll_id IN (${'?,'.repeat(tollIds.length).slice(0, -1)})`;
         
-        // Extract unique toll_ids from CSV data
-        const tollIds = [...new Set(csvResult.data.map(row => row.tollID))];
-        const [tollOperators] = await connection.execute(tollOperatorQuery, [tollIds]);
+        const [tollOperators] = await dbHandler.connection.execute(tollOperatorQuery, tollIds);
+        
+        // Debug logging
+        console.log('Found toll operators:', tollOperators);
         
         // Create a map for quick lookup
         const operatorMap = {};
         tollOperators.forEach(row => {
             operatorMap[row.toll_id] = row.operator_id;
         });
+
+        // Debug logging
+        console.log('Operator Map:', operatorMap);
 
         // Check if all toll stations exist
         const missingTolls = tollIds.filter(id => !operatorMap[id]);
@@ -53,7 +59,7 @@ exports.addpasses = async (req, res) => {
         }
 
         // Start transaction
-        await connection.beginTransaction();
+        await dbHandler.connection.beginTransaction();
 
         const insertQuery = `
             INSERT INTO Passes (timestamp, toll_id, tag_id, tag_home_id, operator_id, charge)
@@ -61,7 +67,7 @@ exports.addpasses = async (req, res) => {
         `;
 
         for (const row of csvResult.data) {
-            await connection.execute(insertQuery, [
+            await dbHandler.connection.execute(insertQuery, [
                 row.timestamp,
                 row.tollID,
                 row.tagRef,
@@ -72,7 +78,7 @@ exports.addpasses = async (req, res) => {
         }
 
         // Commit transaction
-        await connection.commit();
+        await dbHandler.connection.commit();
 
         res.json({
             status: "OK"
@@ -80,8 +86,8 @@ exports.addpasses = async (req, res) => {
         
     } catch (error){
         // Rollback transaction if there was an error
-        if (connection) {
-            await connection.rollback();
+        if (dbHandler.connection) {
+            await dbHandler.connection.rollback();
         }
 
         console.error("Database error:", error);
@@ -90,8 +96,6 @@ exports.addpasses = async (req, res) => {
             message: error.message
         });
     } finally {
-        if (connection) {
-            connection.release();
-        }
+        await dbHandler.disconnect();  // Use the disconnect method from DBHandler
     }
 };
