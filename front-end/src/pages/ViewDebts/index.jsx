@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import ViewDebtsColumn from "./ViewdebtsColumn";
 import React from "react";
+import axios from "axios";
 
 export default function ViewDebtsPage() {
   return (

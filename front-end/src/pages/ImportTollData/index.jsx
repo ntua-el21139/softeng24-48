@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
-import { Button, Heading, Img } from "components/ui";
+import { Button, Heading, Img } from "../../components/ui";
 import React, { useCallback, useState } from "react";
 
 export default function ImportTollDataPage() {
