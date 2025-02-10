@@ -27,8 +27,7 @@ CREATE TABLE Users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role_id INT NOT NULL,
-    operator_id VARCHAR(10) UNIQUE,  -- Only applicable for toll operators (must be UNIQUE)
-    FOREIGN KEY (role_id) REFERENCES Roles(role_id)
+    operator_id VARCHAR(10) UNIQUE  -- Only applicable for toll operators (must be UNIQUE)
 );
 
 CREATE TABLE Tolls (
