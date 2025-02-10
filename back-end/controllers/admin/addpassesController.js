@@ -21,7 +21,7 @@ exports.addpasses = async (req, res) => {
         if (!csvResult.success) {
             return res.status(400).json({
                 status: "failed",
-                info: "you fucked up"
+                info: csvResult.error
             });
         }
 
