@@ -14,6 +14,7 @@ const addpasses = require('./endpoints/admin/addpasses');
 const mapSupply = require('./endpoints/extra/mapSupply')
 const useCaseTwo = require('./endpoints/extra/useCaseTwo');
 const deptOffsetting = require('./endpoints/deptOffsetting');
+const fetchUser = require('./endpoints/extra/fetchUser');
 
 // Define base paths for each route
 router.use('/tollStationPasses', tollStationPasses);
@@ -27,4 +28,6 @@ router.use('/admin/addpasses', addpasses);
 router.use('/extra/mapSupply', mapSupply);
 router.use('/extra/useCaseTwo', useCaseTwo);
 router.use('/deptOffsetting', deptOffsetting);
+router.use('/extra/fetchUser', fetchUser);
+
 module.exports = router;
