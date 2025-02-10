@@ -11,6 +11,7 @@ const healthcheck = require('./endpoints/admin/healthcheck');
 const resetstations = require('./endpoints/admin/resetstations');
 const resetpasses = require('./endpoints/admin/resetpasses');
 const addpasses = require('./endpoints/admin/addpasses');
+const mapSupply = require('./endpoints/extra/mapSupply')
 // Define base paths for each route
 router.use('/tollStationPasses', tollStationPasses);
 router.use('/passAnalysis', passAnalysis);
@@ -20,5 +21,6 @@ router.use('/admin/healthcheck', healthcheck);
 router.use('/admin/resetstations', resetstations);
 router.use('/admin/resetpasses', resetpasses);
 router.use('/admin/addpasses', addpasses);
+router.use('/extra/mapSupply', mapSupply);
 
 module.exports = router;
