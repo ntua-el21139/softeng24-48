@@ -1,16 +1,13 @@
 const pool = require('../../utils/database');
-const bcrypt = require('bcrypt');
 
 exports.getFetchUser = async (req, res) => {
     const { username, password } = req.params;
 
     try {
         const connection = await pool.getConnection();
-        
-        // First get the user by username only
         const [rows] = await connection.execute(
-            'SELECT user_id, username, password, role_id, operator_id FROM Users WHERE username = ?',
-            [username]
+            'SELECT user_id, username, role_id, operator_id FROM Users WHERE username = ? AND password = ?',
+            [username, password]
         );
 
         connection.release();
@@ -22,22 +19,9 @@ exports.getFetchUser = async (req, res) => {
             });
         }
 
-        // Compare hashed password
-        const match = await bcrypt.compare(password, rows[0].password);
-        
-        if (!match) {
-            return res.status(401).json({
-                status: "failed",
-                message: "Invalid username or password"
-            });
-        }
-
-        // Don't send password back in response
-        const { password: _, ...userWithoutPassword } = rows[0];
-        
         res.json({
             status: "success",
-            data: userWithoutPassword
+            data: rows[0]
         });
 
     } catch (error) {
