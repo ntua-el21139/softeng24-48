@@ -1,10 +1,44 @@
 const fs = require('fs').promises;
 const { parse } = require('csv-parse');
+const moment = require('moment');
 
 class CSVHandler {
   constructor(filePath) {
     this.filePath = filePath;
     this.duplicates = new Set();
+    this.expectedHeaders = ['OpID', 'Operator', 'TollID', 'Name', 'PM', 'Locality', 'Road', 'Lat', 'Long', 'Email', 'Price1'];
+  }
+
+  validateHeaders(headers) {
+    const missing = this.expectedHeaders.filter(h => !headers.includes(h));
+    if (missing.length > 0) {
+      throw new Error(`Missing required headers: ${missing.join(', ')}`);
+    }
+    return true;
+  }
+
+  validateRecord(record) {
+    try {
+      // Validate OpID (2-3 uppercase letters)
+      if (!/^[A-Z]{2,3}$/.test(record.OpID)) {
+        return { valid: false, error: 'Invalid OpID format' };
+      }
+
+      // Validate TollID (2-3 letters followed by 2 digits)
+      if (!/^[A-Z]{2,3}\d{2}$/.test(record.TollID)) {
+        return { valid: false, error: 'Invalid TollID format' };
+      }
+
+      // Validate Price1 is numeric and positive
+      const price = parseFloat(record.Price1);
+      if (isNaN(price) || price <= 0) {
+        return { valid: false, error: 'Price must be a positive number' };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: error.message };
+    }
   }
 
   async readCSV() {
@@ -27,6 +61,7 @@ class CSVHandler {
       
       const records = [];
       let malformedLines = 0;
+      let invalidRecords = 0;
       let processedLines = 0;
       
       // Start from line 1 (after header)
@@ -48,6 +83,14 @@ class CSVHandler {
         for (let j = 0; j < headers.length; j++) {
           record[headers[j]] = values[j];
         }
+
+        // Validate record format
+        const validation = this.validateRecord(record);
+        if (!validation.valid) {
+          console.log(`Line ${i + 1} validation failed:`, validation.error);
+          invalidRecords++;
+          continue;
+        }
         
         processedLines++;
         records.push(record);
@@ -58,13 +101,9 @@ class CSVHandler {
       console.log(`- Header line: 1`);
       console.log(`- Data lines: ${lines.length - 1}`);
       console.log(`- Malformed lines: ${malformedLines}`);
+      console.log(`- Invalid records: ${invalidRecords}`);
       console.log(`- Successfully processed lines: ${processedLines}`);
       console.log(`- Total valid records: ${records.length}`);
-      
-      if (records.length !== lines.length - 1 - malformedLines) {
-        console.log('\nWARNING: Record count mismatch!');
-        console.log(`Expected ${lines.length - 1 - malformedLines} records but got ${records.length}`);
-      }
       
       return records;
     } catch (error) {
