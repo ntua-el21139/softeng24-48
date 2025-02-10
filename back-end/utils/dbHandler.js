@@ -67,21 +67,14 @@ class DBHandler {
     return formatted;
   }
 
-  async formatPassRecord(record) {
-    // First get the operator_id from Tolls table for this toll_id
-    const [tollRows] = await this.connection.execute(
-        'SELECT operator_id FROM Tolls WHERE toll_id = ?',
-        [record.tollID]
-    );
-    
-    const operator_id = tollRows.length > 0 ? tollRows[0].operator_id : null;
-    
+  formatPassRecord(record) {
     console.log('Raw record in formatPassRecord:', record);
     const tag_id = record.tagRef;
     const tag_home_id = record.tagHomeID;
     const charge = parseFloat(record.charge);
     
     console.log('Raw timestamp:', record.timestamp);
+    // Parse timestamp using moment and format it to maintain local time
     const timestamp = moment(record.timestamp, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH:mm:ss');
     console.log('Parsed timestamp:', timestamp);
     
@@ -90,7 +83,7 @@ class DBHandler {
         toll_id: record.tollID,
         tag_id: tag_id,
         tag_home_id: tag_home_id,
-        operator_id: operator_id,  // Now using the operator_id from Tolls table
+        operator_id: null,
         charge: charge
     };
   }
@@ -156,7 +149,7 @@ class DBHandler {
       `;
 
       for (const record of records) {
-        const formattedRecord = await this.formatPassRecord(record);
+        const formattedRecord = this.formatPassRecord(record);
         const values = [
           formattedRecord.timestamp,
           formattedRecord.toll_id,
