@@ -13,15 +13,30 @@ from se2448 import (
     handle_admin
 )
 import config
+import requests
 
 class InterTollSSHServer(paramiko.ServerInterface):
     def __init__(self):
         self.event = threading.Event()
+        self.authenticated = False
 
     def check_auth_password(self, username, password):
-        # For demo purposes, accept any username/password
-        # In production, implement proper authentication
-        return paramiko.AUTH_SUCCESSFUL
+        try:
+            url = f"{config.API_BASE_URL}/api/extra/fetchUser/{username}/{password}"
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                self.authenticated = True
+                return paramiko.AUTH_SUCCESSFUL
+            elif response.status_code == 401:
+                print(f"\n❌ Invalid username or password for {username}")
+                return paramiko.AUTH_FAILED
+            else:
+                print(f"\n❌ Error: Server returned status code {response.status_code}")
+                return paramiko.AUTH_FAILED
+        except requests.exceptions.RequestException as e:
+            print(f"\n❌ Error connecting to server: {e}")
+            return paramiko.AUTH_FAILED
 
     def check_channel_request(self, kind, chanid):
         if kind == "session":
@@ -50,7 +65,7 @@ class SSHOutputCatcher:
         pass
 
 def handle_client(client, addr):
-    old_stdout = sys.stdout  # Define this at the start of the function
+    old_stdout = sys.stdout
     sys.stdout.write(f'New connection from {addr[0]}:{addr[1]}\n')
     sys.stdout.flush()
     
@@ -80,7 +95,8 @@ def handle_client(client, addr):
         
         # Create CLI instance with API client
         cli = InterTollCLI()
-        api_client = cli.api_client  # Use the same API client instance
+        cli.authenticated = server.authenticated  # Transfer authentication state
+        api_client = cli.api_client
         
         # Send welcome message
         channel.send('\r\n')
@@ -123,21 +139,18 @@ def handle_client(client, addr):
                                 # Parse command and use the CLI's handle_command method
                                 args = actual_cmd.split()
                                 if args[0] == 'se2448':
-                                    cli.handle_command(args[1:])  # Pass everything after 'se2448'
+                                    cli.handle_command(args[1:])
                                 else:
                                     print("Commands must start with 'se2448'")
                                 output_catcher.flush()
                                 
-                                # Add "press any key" prompt - only use print()
                                 print("\nPress any key to return to main menu...")
-                                # Wait for any key press
                                 channel.recv(1)
                                 
-                                # After key press, show menu
                                 print("\n")
                                 for line in cli.intro.split('\n'):
                                     print(line)
-                                break  # Return to main menu
+                                break
                     else:
                         cli.onecmd(initial_cmd)
                         output_catcher.flush()
@@ -151,11 +164,11 @@ def handle_client(client, addr):
                 output_catcher.flush()
 
     except Exception as e:
-        sys.stdout = old_stdout  # Now old_stdout will always be defined
+        sys.stdout = old_stdout
         sys.stdout.write(f'*** Caught exception: {str(e)}\n')
         sys.stdout.flush()
     finally:
-        sys.stdout = old_stdout  # Now old_stdout will always be defined
+        sys.stdout = old_stdout
         try:
             transport.close()
         except:
