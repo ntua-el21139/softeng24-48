@@ -23,13 +23,18 @@ exports.getPassesCost = async (req, res) => {
             });
         }
 
-        // Check if both operators exist
-        const [operators] = await pool.execute(
-            'SELECT DISTINCT operator_id FROM Passes WHERE operator_id IN (?, ?)',
-            [tollOpID, tagOpID]
+        // Check if both operators exist separately
+        const [tollOperator] = await pool.execute(
+            'SELECT operator_id FROM Passes WHERE operator_id = ? LIMIT 1',
+            [tollOpID]
         );
 
-        if (operators.length !== 2) {
+        const [tagOperator] = await pool.execute(
+            'SELECT operator_id FROM Passes WHERE operator_id = ? LIMIT 1',
+            [tagOpID]
+        );
+
+        if (tollOperator.length === 0 || tagOperator.length === 0) {
             return res.status(400).json({
                 status: "failed",
                 message: "One or both operators not found"
@@ -70,7 +75,6 @@ exports.getPassesCost = async (req, res) => {
             periodTo: date_to,
             nPasses: rows.length,
             passesCost: totalCost
-
         });
         
     } catch (error) {

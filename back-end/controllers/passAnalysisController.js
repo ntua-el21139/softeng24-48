@@ -24,13 +24,18 @@ exports.getPassAnalysis = async (req, res) => {
             });
         }
 
-        // Check if both operators exist
-        const [operators] = await pool.execute(
-            'SELECT DISTINCT operator_id FROM Passes WHERE operator_id IN (?, ?)',
-            [stationOpID, tagOpID]
+        // Check if both operators exist separately
+        const [stationOperator] = await pool.execute(
+            'SELECT operator_id FROM Passes WHERE operator_id = ? LIMIT 1',
+            [stationOpID]
         );
 
-        if (operators.length !== 2) {
+        const [tagOperator] = await pool.execute(
+            'SELECT operator_id FROM Passes WHERE operator_id = ? LIMIT 1',
+            [tagOpID]
+        );
+
+        if (stationOperator.length === 0 || tagOperator.length === 0) {
             return res.status(400).json({
                 status: "failed",
                 message: "One or both operators not found"
@@ -78,7 +83,6 @@ exports.getPassAnalysis = async (req, res) => {
             periodTo: date_to,
             nPasses: passList.length,
             passList
-
         });
 
     }catch (error){
