@@ -7,27 +7,61 @@ import "react-datepicker/dist/react-datepicker.css";
 import html2canvas from 'html2canvas';
 
 export default function StatisticsColumn() {
-  const [selectedStation, setSelectedStation] = useState('NO01');
-  const [selectedRegion, setSelectedRegion] = useState('NO');
-  const [showRegionDropdown, setShowRegionDropdown] = useState(false);
+  const [selectedStation, setSelectedStation] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [passesData, setPassesData] = useState([]);
-  const [showStationDropdown, setShowStationDropdown] = useState(false);
-  const [stationNames, setStationNames] = useState({});
-  const [tollNames, setTollNames] = useState([]);
   const [showTollDropdown, setShowTollDropdown] = useState(false);
+  const [tollNames, setTollNames] = useState([]);
   const [tollStationsData, setTollStationsData] = useState([]);
   const [selectedTollName, setSelectedTollName] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateRangeText, setDateRangeText] = useState('Select Time Period');
 
-  const regions = ['AM', 'EG', 'GE', 'KO', 'MO', 'NAO', 'NO', 'OO'];
-  
-  // Update stations based on selected region
-  const getStationsForRegion = (region) => {
-    return [`${region}01`, `${region}02`, `${region}03`, `${region}11`];
+  // Get operator_id from localStorage on component mount
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const operatorId = userData?.data?.operator_id;
+    if (operatorId) {
+      setSelectedRegion(operatorId);
+      // Fetch toll names for the operator's region
+      fetchTollNames(operatorId);
+    }
+  }, []);
+
+  const fetchTollNames = async (region) => {
+    try {
+      const url = `http://localhost:9115/api/extra/useCaseTwo/${region}`;
+      console.log('Fetching toll names for region:', url);
+      
+      const response = await axios.get(url);
+      console.log('Toll Names Response:', response.data);
+      
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        const tollStations = response.data.data;
+        setTollStationsData(tollStations);
+        
+        // Filter stations for the selected region
+        const regionStations = tollStations.filter(station => 
+          station.toll_id.startsWith(region)
+        );
+
+        // Map to array of names
+        const names = regionStations.map(station => station.toll_name);
+        console.log('Extracted toll names:', names);
+        
+        setTollNames(names);
+      } else {
+        setTollNames([]);
+        setTollStationsData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching toll names:', error);
+      setTollNames([]);
+      setTollStationsData([]);
+    }
   };
-
-  const stations = getStationsForRegion(selectedRegion);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
@@ -113,88 +147,29 @@ export default function StatisticsColumn() {
     }
   };
 
-  // Fetch station names from API
-  const fetchStationNames = async (region) => {
-    try {
-      const url = `http://localhost:9115/api/extra/useCaseTwo/${region}`;
-      console.log('Fetching station names from:', url);
-      
-      const response = await axios.get(url);
-      console.log('Station Names Response:', response.data);
-      
-      if (response.data && response.data.length > 0) {
-        // Get the first row which contains the toll station names
-        const tollNames = response.data[0];
-        console.log('Toll Names:', tollNames);
-
-        // Create mapping of station codes to toll names
-        const nameMapping = {};
-        // Map the first 4 toll names to station codes
-        for (let i = 0; i < 4; i++) {
-          const stationCode = `${region}${(i + 1).toString().padStart(2, '0')}`;
-          if (tollNames[i]) {
-            nameMapping[stationCode] = tollNames[i];
-          }
-        }
-        console.log('Name Mapping:', nameMapping);
-        setStationNames(nameMapping);
-      }
-    } catch (error) {
-      console.error('Error fetching station names:', error);
-      alert(`Error fetching station names: ${error.message}`);
+  // Add a useEffect to watch for changes in selectedStation and dateRangeText
+  useEffect(() => {
+    if (selectedStation && dateRangeText !== 'Select Time Period') {
+      fetchData();
     }
+  }, [selectedStation, dateRangeText]);
+
+  // Modify the toll station selection handler
+  const handleTollSelect = (tollName) => {
+    const station = tollStationsData.find(s => s.toll_name === tollName);
+    if (station) {
+      setSelectedStation(station.toll_id);
+      setSelectedTollName(tollName);
+    }
+    setShowTollDropdown(false);
   };
 
-  // Add useEffect to fetch station names when component mounts
-  useEffect(() => {
-    fetchStationNames(selectedRegion);
-  }, []); // Empty dependency array means this runs once when component mounts
-
-  // Modify the handleRegionSelect function
-  const handleRegionSelect = async (region) => {
-    setSelectedRegion(region);
-    setSelectedStation(`${region}01`);
-    setShowRegionDropdown(false);
-    setSelectedTollName(''); // Reset selected toll name when region changes
-    
-    // Fetch toll names immediately when region changes
-    try {
-      const url = `http://localhost:9115/api/extra/useCaseTwo/${region}`;
-      console.log('Fetching toll names for new region:', url);
-      
-      const response = await axios.get(url);
-      console.log('Toll Names Response:', response.data);
-      
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
-        const tollStations = response.data.data;
-        setTollStationsData(tollStations);
-        
-        // Filter stations for the selected region
-        const regionStations = tollStations.filter(station => 
-          station.toll_id.startsWith(region)
-        );
-
-        // Map to array of names
-        const names = regionStations.map(station => station.toll_name);
-        console.log('Extracted toll names:', names);
-        
-        setTollNames(names);
-        
-        // Update station names mapping
-        const nameMapping = {};
-        regionStations.forEach(station => {
-          nameMapping[station.toll_id] = station.toll_name;
-        });
-        setStationNames(nameMapping);
-      } else {
-        setTollNames([]);
-        setTollStationsData([]);
-      }
-    } catch (error) {
-      console.error('Error fetching toll names:', error);
-      setTollNames([]);
-      setTollStationsData([]);
-    }
+  // Modify the date selection handler
+  const handleDatesDone = () => {
+    const formattedStartDate = startDate.toISOString().split('T')[0];
+    const formattedEndDate = endDate.toISOString().split('T')[0];
+    setDateRangeText(`${formattedStartDate} - ${formattedEndDate}`);
+    setShowDatePicker(false);
   };
 
   return (
@@ -202,31 +177,6 @@ export default function StatisticsColumn() {
       <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
         {/* Selection Controls */}
         <div className="flex gap-4 justify-between w-[600px]">
-          {/* Region Selection */}
-          <div className="relative">
-            <button 
-              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-[140px] h-[48px]"
-              onClick={() => setShowRegionDropdown(!showRegionDropdown)}
-            >
-              <span className="text-base font-medium whitespace-nowrap">{selectedRegion}</span>
-              <span className="text-xl ml-2">›</span>
-            </button>
-            
-            {showRegionDropdown && (
-              <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
-                {regions.map((region) => (
-                  <button
-                    key={region}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                    onClick={() => handleRegionSelect(region)}
-                  >
-                    {region}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Toll Names Selection */}
           <div className="relative">
             <button 
@@ -245,15 +195,7 @@ export default function StatisticsColumn() {
                   <button
                     key={index}
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-normal"
-                    onClick={() => {
-                      const station = tollStationsData.find(s => s.toll_name === tollName);
-                      if (station) {
-                        setSelectedStation(station.toll_id); // This sets the toll_id that will be used by fetchData
-                        setSelectedTollName(tollName);
-                        console.log('Selected toll_id:', station.toll_id); // Add this for debugging
-                      }
-                      setShowTollDropdown(false);
-                    }}
+                    onClick={() => handleTollSelect(tollName)}
                   >
                     {tollName}
                   </button>
@@ -262,33 +204,54 @@ export default function StatisticsColumn() {
             )}
           </div>
 
-          {/* Date Selection */}
-          <div className="flex flex-col gap-2">
-            <DatePicker
-              selected={startDate}
-              onChange={date => setStartDate(date)}
-              className="px-4 py-2 border rounded-lg"
-              dateFormat="yyyy-MM-dd"
-              placeholderText="From date"
-            />
-            <DatePicker
-              selected={endDate}
-              onChange={date => setEndDate(date)}
-              className="px-4 py-2 border rounded-lg"
-              dateFormat="yyyy-MM-dd"
-              placeholderText="To date"
-            />
+          {/* Date Selection Button */}
+          <div className="relative">
+            <button 
+              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-[300px] h-[48px]"
+              onClick={() => setShowDatePicker(!showDatePicker)}
+            >
+              <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                {dateRangeText}
+              </span>
+              <span className="text-xl ml-2">›</span>
+            </button>
+            
+            {showDatePicker && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10 p-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">From:</label>
+                    <DatePicker
+                      selected={startDate}
+                      onChange={date => setStartDate(date)}
+                      className="w-full px-4 py-2 border rounded-lg"
+                      dateFormat="yyyy-MM-dd"
+                      placeholderText="From date"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">To:</label>
+                    <DatePicker
+                      selected={endDate}
+                      onChange={date => setEndDate(date)}
+                      className="w-full px-4 py-2 border rounded-lg"
+                      dateFormat="yyyy-MM-dd"
+                      placeholderText="To date"
+                    />
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={handleDatesDone}
+                      className="bg-[#2D7EFF] text-white px-4 py-2 rounded-lg hover:bg-[#2D7EFF]/90 transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Search Button */}
-        <Button
-          shape="round"
-          className="bg-[#2D7EFF] text-white px-6 py-2 rounded-full hover:bg-[#2D7EFF]/90 transition-colors mt-4"
-          onClick={fetchData}
-        >
-          Search
-        </Button>
 
         {/* Statistics Display */}
         <div className="w-[600px] mt-6">
