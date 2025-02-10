@@ -19,16 +19,16 @@ CREATE TABLE Roles (
     role_id INT AUTO_INCREMENT PRIMARY KEY,
     role_name ENUM('Admin', 'Toll Operator', 'Analyst', 'Business') NOT NULL,
     permission_id INT UNIQUE,  -- One-to-one with Permission
-    FOREIGN KEY (permission_id) REFERENCES Permissions(permission_id)
+    FOREIGN KEY (permission_id) REFERENCES Permissions(permission_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
-  
+  
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role_id INT NOT NULL,
     operator_id VARCHAR(10) UNIQUE,  -- Only applicable for toll operators (must be UNIQUE)
-    FOREIGN KEY (role_id) REFERENCES Roles(role_id)
+    FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Tolls (
@@ -43,19 +43,19 @@ CREATE TABLE Tolls (
     longt VARCHAR(50),
     email VARCHAR(50),
     price DOUBLE(4,2),
-    FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
+    FOREIGN KEY (operator_id) REFERENCES Users(operator_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE Passes (
     pass_id INT AUTO_INCREMENT PRIMARY KEY,
-    timestamp DATETIME,
-    toll_id VARCHAR(10),
-    tag_id VARCHAR(10),
-    tag_home_id VARCHAR(10),
-    operator_id VARCHAR(10),
-    charge DOUBLE(4,2),
+    timestamp DATETIME NOT NULL,
+    toll_id VARCHAR(10) NOT NULL,
+    tag_id VARCHAR(10) NOT NULL,
+    tag_home_id VARCHAR(10) NOT NULL,
+    operator_id VARCHAR(10),  -- Removed NOT NULL to allow ON DELETE SET NULL
+    charge DOUBLE(4,2) NOT NULL,
     FOREIGN KEY (toll_id) REFERENCES Tolls(toll_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
+    FOREIGN KEY (operator_id) REFERENCES Users(operator_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE Monthly_Debts (
@@ -64,5 +64,7 @@ CREATE TABLE Monthly_Debts (
     creditor_operator_id VARCHAR(10) NOT NULL, -- The operator who is owed money
     amount DECIMAL(10,2) NOT NULL CHECK (amount > 0), -- Debt amount
     month_year DATE NOT NULL, -- The end of the month (YYYY-MM-DD format)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Timestamp of entry
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of entry
+    FOREIGN KEY (debtor_operator_id) REFERENCES Users(operator_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (creditor_operator_id) REFERENCES Users(operator_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
