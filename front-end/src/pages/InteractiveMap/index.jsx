@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
 import { IoFilterSharp } from "react-icons/io5";
 import { IoMdClose } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 
 const libraries = ['places', 'marker'];
 const MAP_ID = 'AIzaSyBnva_tnIVwDQb-XVBDBvin1AmgiXcImD8';
@@ -44,6 +45,7 @@ const InteractiveMap = () => {
   const [selectedOperators, setSelectedOperators] = useState(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filteredMarkers, setFilteredMarkers] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -193,6 +195,11 @@ const InteractiveMap = () => {
       )}
     </div>
   );
+
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    navigate('/');
+  };
 
   return (
     <>

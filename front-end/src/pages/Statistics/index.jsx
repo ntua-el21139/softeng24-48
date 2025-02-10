@@ -2,8 +2,16 @@ import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import StatisticsColumn from "./StatisticsColumn";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function StatisticsPage() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    navigate('/');
+  };
+
   return (
     <>
       <Helmet>

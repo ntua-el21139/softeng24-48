@@ -2,11 +2,18 @@ import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import { Button, Heading, Img } from "../../components/ui";
 import React, { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function ImportTollDataPage() {
+  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    navigate('/');
+  };
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();

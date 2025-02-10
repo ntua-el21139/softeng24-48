@@ -8,6 +8,9 @@ export default function Home1Page() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem('userData');
+    // Navigate to login page
     navigate('/');
   };
 

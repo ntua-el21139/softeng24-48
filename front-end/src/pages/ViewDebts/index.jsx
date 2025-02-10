@@ -3,8 +3,16 @@ import Header from "../../components/Header";
 import ViewDebtsColumn from "./ViewdebtsColumn";
 import React from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function ViewDebtsPage() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    navigate('/');
+  };
+
   return (
     <>
       <Helmet>
