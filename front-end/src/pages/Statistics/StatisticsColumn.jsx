@@ -8,12 +8,26 @@ import html2canvas from 'html2canvas';
 
 export default function StatisticsColumn() {
   const [selectedStation, setSelectedStation] = useState('NO01');
+  const [selectedRegion, setSelectedRegion] = useState('NO');
+  const [showRegionDropdown, setShowRegionDropdown] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [passesData, setPassesData] = useState([]);
   const [showStationDropdown, setShowStationDropdown] = useState(false);
+  const [stationNames, setStationNames] = useState({});
+  const [tollNames, setTollNames] = useState([]);
+  const [showTollDropdown, setShowTollDropdown] = useState(false);
+  const [tollStationsData, setTollStationsData] = useState([]);
+  const [selectedTollName, setSelectedTollName] = useState('');
 
-  const stations = ['NO01', 'NO02', 'NO03', 'NO11'];
+  const regions = ['AM', 'EG', 'GE', 'KO', 'MO', 'NAO', 'NO', 'OO'];
+  
+  // Update stations based on selected region
+  const getStationsForRegion = (region) => {
+    return [`${region}01`, `${region}02`, `${region}03`, `${region}11`];
+  };
+
+  const stations = getStationsForRegion(selectedRegion);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
@@ -21,8 +35,10 @@ export default function StatisticsColumn() {
 
   const fetchData = async () => {
     try {
+      // Use selectedStation which contains the toll_id from the selected toll name
       const url = `http://localhost:9115/api/tollStationPasses/${selectedStation}/${formatDate(startDate)}/${formatDate(endDate)}`;
       console.log('Fetching data from:', url);
+      console.log('Using toll_id:', selectedStation); // Add this for debugging
       
       const response = await axios.get(url);
       console.log('API Response:', response.data);
@@ -35,9 +51,7 @@ export default function StatisticsColumn() {
 
       // Group passes by date and count them
       const passesPerDay = response.data.passList.reduce((acc, pass) => {
-        // Extract date from timestamp (format: "2022-01-05 04:38")
         const date = pass.timestamp.split(' ')[0];
-        
         if (!acc[date]) {
           acc[date] = 0;
         }
@@ -99,33 +113,149 @@ export default function StatisticsColumn() {
     }
   };
 
+  // Fetch station names from API
+  const fetchStationNames = async (region) => {
+    try {
+      const url = `http://localhost:9115/api/extra/useCaseTwo/${region}`;
+      console.log('Fetching station names from:', url);
+      
+      const response = await axios.get(url);
+      console.log('Station Names Response:', response.data);
+      
+      if (response.data && response.data.length > 0) {
+        // Get the first row which contains the toll station names
+        const tollNames = response.data[0];
+        console.log('Toll Names:', tollNames);
+
+        // Create mapping of station codes to toll names
+        const nameMapping = {};
+        // Map the first 4 toll names to station codes
+        for (let i = 0; i < 4; i++) {
+          const stationCode = `${region}${(i + 1).toString().padStart(2, '0')}`;
+          if (tollNames[i]) {
+            nameMapping[stationCode] = tollNames[i];
+          }
+        }
+        console.log('Name Mapping:', nameMapping);
+        setStationNames(nameMapping);
+      }
+    } catch (error) {
+      console.error('Error fetching station names:', error);
+      alert(`Error fetching station names: ${error.message}`);
+    }
+  };
+
+  // Add useEffect to fetch station names when component mounts
+  useEffect(() => {
+    fetchStationNames(selectedRegion);
+  }, []); // Empty dependency array means this runs once when component mounts
+
+  // Modify the handleRegionSelect function
+  const handleRegionSelect = async (region) => {
+    setSelectedRegion(region);
+    setSelectedStation(`${region}01`);
+    setShowRegionDropdown(false);
+    setSelectedTollName(''); // Reset selected toll name when region changes
+    
+    // Fetch toll names immediately when region changes
+    try {
+      const url = `http://localhost:9115/api/extra/useCaseTwo/${region}`;
+      console.log('Fetching toll names for new region:', url);
+      
+      const response = await axios.get(url);
+      console.log('Toll Names Response:', response.data);
+      
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        const tollStations = response.data.data;
+        setTollStationsData(tollStations);
+        
+        // Filter stations for the selected region
+        const regionStations = tollStations.filter(station => 
+          station.toll_id.startsWith(region)
+        );
+
+        // Map to array of names
+        const names = regionStations.map(station => station.toll_name);
+        console.log('Extracted toll names:', names);
+        
+        setTollNames(names);
+        
+        // Update station names mapping
+        const nameMapping = {};
+        regionStations.forEach(station => {
+          nameMapping[station.toll_id] = station.toll_name;
+        });
+        setStationNames(nameMapping);
+      } else {
+        setTollNames([]);
+        setTollStationsData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching toll names:', error);
+      setTollNames([]);
+      setTollStationsData([]);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center">
       <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
         {/* Selection Controls */}
         <div className="flex gap-4 justify-between w-[600px]">
-          {/* Station Selection */}
+          {/* Region Selection */}
           <div className="relative">
             <button 
-              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-[298px] h-[48px]"
-              onClick={() => setShowStationDropdown(!showStationDropdown)}
+              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-[140px] h-[48px]"
+              onClick={() => setShowRegionDropdown(!showRegionDropdown)}
             >
-              <span className="text-base font-medium whitespace-nowrap">{selectedStation}</span>
+              <span className="text-base font-medium whitespace-nowrap">{selectedRegion}</span>
               <span className="text-xl ml-2">›</span>
             </button>
             
-            {showStationDropdown && (
+            {showRegionDropdown && (
               <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
-                {stations.map((station) => (
+                {regions.map((region) => (
                   <button
-                    key={station}
+                    key={region}
                     className="w-full px-4 py-2 text-left hover:bg-gray-100"
+                    onClick={() => handleRegionSelect(region)}
+                  >
+                    {region}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Toll Names Selection */}
+          <div className="relative">
+            <button 
+              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-[300px] h-[48px]"
+              onClick={() => setShowTollDropdown(!showTollDropdown)}
+            >
+              <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                {selectedTollName || (tollNames.length > 0 ? `Select ${selectedRegion} Toll Station` : `Loading ${selectedRegion} Stations...`)}
+              </span>
+              <span className="text-xl ml-2">›</span>
+            </button>
+            
+            {showTollDropdown && tollNames.length > 0 && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-[300px] overflow-y-auto">
+                {tollNames.map((tollName, index) => (
+                  <button
+                    key={index}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-normal"
                     onClick={() => {
-                      setSelectedStation(station);
-                      setShowStationDropdown(false);
+                      const station = tollStationsData.find(s => s.toll_name === tollName);
+                      if (station) {
+                        setSelectedStation(station.toll_id); // This sets the toll_id that will be used by fetchData
+                        setSelectedTollName(tollName);
+                        console.log('Selected toll_id:', station.toll_id); // Add this for debugging
+                      }
+                      setShowTollDropdown(false);
                     }}
                   >
-                    {station}
+                    {tollName}
                   </button>
                 ))}
               </div>

@@ -21,7 +21,7 @@ CREATE TABLE Roles (
     permission_id INT UNIQUE,  -- One-to-one with Permission
     FOREIGN KEY (permission_id) REFERENCES Permissions(permission_id)
 );
-
+  
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
