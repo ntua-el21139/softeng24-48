@@ -50,6 +50,7 @@ class SSHOutputCatcher:
         pass
 
 def handle_client(client, addr):
+    old_stdout = sys.stdout  # Define this at the start of the function
     sys.stdout.write(f'New connection from {addr[0]}:{addr[1]}\n')
     sys.stdout.flush()
     
@@ -150,11 +151,11 @@ def handle_client(client, addr):
                 output_catcher.flush()
 
     except Exception as e:
-        sys.stdout = old_stdout  # Restore original stdout
+        sys.stdout = old_stdout  # Now old_stdout will always be defined
         sys.stdout.write(f'*** Caught exception: {str(e)}\n')
         sys.stdout.flush()
     finally:
-        sys.stdout = old_stdout  # Restore original stdout
+        sys.stdout = old_stdout  # Now old_stdout will always be defined
         try:
             transport.close()
         except:
@@ -189,22 +190,59 @@ def read_command(channel):
 def start_server(port=2222, key_file=None, host='0.0.0.0'):
     """Start the SSH server"""
     global host_key
-    if key_file and os.path.exists(key_file):
-        host_key = paramiko.RSAKey(filename=key_file)
-        print(f"Loaded existing host key from {key_file}")
-    else:
-        host_key = paramiko.RSAKey.generate(2048)
-        if key_file:
+    active_connections = []  # Track active connections
+    max_connections = 10     # Maximum number of simultaneous connections
+    
+    # Ensure the key file has the correct path
+    key_file = os.path.abspath(key_file) if key_file else 'ssh_host_key'
+    
+    try:
+        # Try to load existing key with proper error handling
+        if os.path.exists(key_file):
+            try:
+                host_key = paramiko.RSAKey(filename=key_file)
+                print(f"Loaded existing host key from {key_file}")
+            except Exception as e:
+                print(f"Error loading existing host key: {e}")
+                print("Generating new key...")
+                host_key = paramiko.RSAKey.generate(2048)
+                host_key.write_private_key_file(key_file)
+                print(f"Generated new host key and saved to {key_file}")
+        else:
+            # Generate new key if none exists
+            print(f"No existing host key found at {key_file}")
+            host_key = paramiko.RSAKey.generate(2048)
             host_key.write_private_key_file(key_file)
             print(f"Generated new host key and saved to {key_file}")
-    
+            
+        # Set proper permissions on the key file (Unix-like systems only)
+        if os.name != 'nt':  # not Windows
+            os.chmod(key_file, 0o600)
+            
+    except Exception as e:
+        print(f"Critical error with host key: {e}")
+        sys.exit(1)
+
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.bind((host, port))
+        
+        # Add explicit error handling for port binding
+        try:
+            sock.bind((host, port))
+        except socket.error as e:
+            if e.errno == 13:  # Permission denied
+                print(f"Permission denied when binding to port {port}. Try running with sudo?")
+            elif e.errno == 48:  # Address already in use
+                print(f"Port {port} is already in use. Try killing any existing processes or use a different port.")
+            else:
+                print(f"Failed to bind to port {port}: {e}")
+            sys.exit(1)
+            
         print(f"Successfully bound to {host}:{port}")
         
+        # Test if port is actually listening
         sock_name = sock.getsockname()
         print(f"Socket bound to: {sock_name[0]}:{sock_name[1]}")
         
@@ -215,6 +253,7 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
     try:
         sock.listen(100)
         print(f'Listening for connections on {host}:{port}...')
+        print(f'Maximum simultaneous connections: {max_connections}')
         
         hostname = socket.gethostname()
         local_ip = socket.gethostbyname(hostname)
@@ -247,15 +286,31 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
         while True:
             try:
                 client, addr = sock.accept()
+                
+                # Check if we've reached max connections
+                active_connections = [t for t in active_connections if t.is_alive()]
+                if len(active_connections) >= max_connections:
+                    print(f"Maximum connections ({max_connections}) reached. Rejecting connection from {addr[0]}:{addr[1]}")
+                    client.close()
+                    continue
+                
                 print(f"\nNew connection attempt from {addr[0]}:{addr[1]}")
+                print(f"Active connections: {len(active_connections)}/{max_connections}")
+                
                 thread = threading.Thread(target=handle_client, args=(client, addr))
                 thread.daemon = True
                 thread.start()
+                active_connections.append(thread)
+                
             except Exception as e:
                 print(f"Error accepting connection: {e}")
             
     except KeyboardInterrupt:
         print('\nServer shutting down...')
+        # Clean up connections
+        for thread in active_connections:
+            if thread.is_alive():
+                thread.join(timeout=1.0)
     except Exception as e:
         print(f'*** Listen/accept failed: {str(e)}')
     finally:
