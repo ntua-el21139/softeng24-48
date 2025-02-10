@@ -1,63 +1,61 @@
 const fs = require('fs').promises;
 const { parse } = require('csv-parse');
+const moment = require('moment');
 
 class CSVHandler {
-  constructor(filePath, type) {
+  constructor(filePath) {
     this.filePath = filePath;
     this.duplicates = new Set();
-    this.malformedLines = 0;
-    this.type = type; // 'passes' or 'tolls'
-    
-    // Define expected columns for each type
-    this.expectedColumns = {
-      passes: ['timestamp', 'tollID', 'tagRef', 'tagHomeID', 'charge'],
-      tolls: ['OpID', 'Operator', 'TollID', 'Name', 'PM', 'Locality', 'Road', 'Lat', 'Long', 'Email', 'Price2']
-    };
-  }
-
-  isCSVFile() {
-    // Check file extension
-    return this.filePath.toLowerCase().endsWith('.csv');
+    this.expectedHeaders = ['timestamp', 'tollID', 'tagRef', 'tagHomeID', 'charge'];
   }
 
   validateHeaders(headers) {
-    if (!this.type || !this.expectedColumns[this.type]) {
-      throw new Error('Invalid or missing data type');
+    const missing = this.expectedHeaders.filter(h => !headers.includes(h));
+    if (missing.length > 0) {
+      throw new Error(`Missing required headers: ${missing.join(', ')}`);
     }
-
-    const expected = this.expectedColumns[this.type];
-    const missing = expected.filter(col => !headers.includes(col));
-    const extra = headers.filter(col => !expected.includes(col));
-
-    if (missing.length > 0 || extra.length > 0) {
-      let error = 'Invalid CSV structure:';
-      if (missing.length > 0) {
-        error += `\nMissing columns: ${missing.join(', ')}`;
-      }
-      if (extra.length > 0) {
-        error += `\nUnexpected columns: ${extra.join(', ')}`;
-      }
-      throw new Error(error);
-    }
-
     return true;
+  }
+
+  validateRecord(record) {
+    // Enhanced validation rules
+    try {
+      // Validate timestamp format and range
+      if (!moment(record.timestamp, 'YYYY-MM-DD HH:mm').isValid()) {
+        return { valid: false, error: 'Invalid timestamp format' };
+      }
+
+      // Validate charge is numeric and positive
+      const charge = parseFloat(record.charge);
+      if (isNaN(charge) || charge <= 0) {
+        return { valid: false, error: 'Charge must be a positive number' };
+      }
+
+      // Validate tollID format (2-3 letters followed by 2 digits)
+      if (!/^[A-Z]{2,3}\d{2}$/.test(record.tollID)) {
+        return { valid: false, error: 'Invalid tollID format' };
+      }
+
+      // Validate tagRef format (3 letters followed by alphanumeric)
+      if (!/^[A-Z]{3}[A-Z0-9]+$/.test(record.tagRef)) {
+        return { valid: false, error: 'Invalid tagRef format' };
+      }
+
+      // Validate tagHomeID (2-3 uppercase letters)
+      if (!/^[A-Z]{2,3}$/.test(record.tagHomeID)) {
+        return { valid: false, error: 'Invalid tagHomeID format' };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: error.message };
+    }
   }
 
   async readCSV() {
     try {
-      // First check if it's a CSV file
-      if (!this.isCSVFile()) {
-        throw new Error('File must be a CSV file');
-      }
-
       console.log('Reading file:', this.filePath);
       const fileContent = await fs.readFile(this.filePath, 'utf-8');
-      
-      // Basic CSV structure validation
-      if (!fileContent.includes(',')) {
-        throw new Error('File does not appear to be a valid CSV (no commas found)');
-      }
-
       const allLines = fileContent.split('\n');
       
       // Remove empty lines from the end of the file
@@ -72,10 +70,9 @@ class CSVHandler {
       const headers = lines[0].trim().split(',');
       console.log('Headers:', headers);
       
-      // Validate headers
-      this.validateHeaders(headers);
-      
       const records = [];
+      let malformedLines = 0;
+      let invalidRecords = 0;
       let processedLines = 0;
       
       // Start from line 1 (after header)
@@ -89,13 +86,21 @@ class CSVHandler {
         
         if (values.length !== headers.length) {
           console.log(`Line ${i + 1} has ${values.length} values but expected ${headers.length}, skipping:`, line);
-          this.malformedLines++;
+          malformedLines++;
           continue;
         }
         
         const record = {};
         for (let j = 0; j < headers.length; j++) {
           record[headers[j]] = values[j];
+        }
+
+        // Validate record format
+        const validation = this.validateRecord(record);
+        if (!validation.valid) {
+          console.log(`Line ${i + 1} validation failed:`, validation.error);
+          invalidRecords++;
+          continue;
         }
         
         processedLines++;
@@ -106,14 +111,10 @@ class CSVHandler {
       console.log(`- Total lines in file: ${lines.length}`);
       console.log(`- Header line: 1`);
       console.log(`- Data lines: ${lines.length - 1}`);
-      console.log(`- Malformed lines: ${this.malformedLines}`);
+      console.log(`- Malformed lines: ${malformedLines}`);
+      console.log(`- Invalid records: ${invalidRecords}`);
       console.log(`- Successfully processed lines: ${processedLines}`);
       console.log(`- Total valid records: ${records.length}`);
-      
-      if (records.length !== lines.length - 1 - this.malformedLines) {
-        console.log('\nWARNING: Record count mismatch!');
-        console.log(`Expected ${lines.length - 1 - this.malformedLines} records but got ${records.length}`);
-      }
       
       return records;
     } catch (error) {
@@ -143,18 +144,8 @@ class CSVHandler {
   async process() {
     try {
       const records = await this.readCSV();
-      
-      // Check if we had any malformed lines
-      if (this.malformedLines > 0) {
-        return {
-          success: false,
-          error: `File contains ${this.malformedLines} malformed lines`,
-          malformedCount: this.malformedLines
-        };
-      }
-
-      // Check duplicates
       const hasDuplicates = !this.checkDuplicates(records);
+
       if (hasDuplicates) {
         return {
           success: false,
