@@ -23,7 +23,7 @@ exports.getHealthcheck = async (req, res) => {
 
     } catch (error) {
         console.error("Database error:", error);
-        res.status(500).json({
+        res.status(401).json({
             status: "failed",
             dbconnection: process.env.DB_DATABASE + "@" + process.env.DB_HOST
         });
