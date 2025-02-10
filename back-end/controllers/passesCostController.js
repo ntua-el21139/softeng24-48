@@ -56,7 +56,6 @@ exports.getPassesCost = async (req, res) => {
         //Execute query
         const [rows] = await pool.execute(sql, [tollOpID, tagOpID, date_from, date_to]);
 
-        // Check if any passes found
         if (rows.length === 0) {
             return res.status(204).json({
                 status: "failed",
@@ -64,7 +63,8 @@ exports.getPassesCost = async (req, res) => {
             });
         }
 
-        const totalCost = rows.reduce((sum, row) => sum + row.charge, 0);
+        // Convert to cents (integers) before summing to avoid floating-point errors
+        const totalCost = rows.reduce((sum, row) => sum + Math.round(row.charge * 100), 0) / 100;
         
         //Response
         res.json({
