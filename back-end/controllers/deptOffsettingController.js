@@ -13,13 +13,16 @@ exports.getDeptOffsetting = async (req, res) => {
             });
         }
 
-        // Validate date format for YYYY-MM
-        if (!moment(date, 'YYYY-MM', true).isValid()) {
+        // Validate date format for YYYYMM
+        if (!moment(date, 'YYYYMM', true).isValid()) {
             return res.status(400).json({
                 status: "failed",
-                message: "Invalid date format. Use YYYY-MM"
+                message: "Invalid date format. Use YYYYMM"
             });
         }
+
+        // Convert YYYYMM to YYYY-MM for MySQL
+        const mysqlDate = moment(date, 'YYYYMM').format('YYYY-MM');
 
         const [stationOperator] = await pool.execute(
             'SELECT operator_id FROM Passes WHERE operator_id = ? LIMIT 1',
@@ -42,7 +45,7 @@ exports.getDeptOffsetting = async (req, res) => {
                     ORDER BY created_at ASC
                 `;
                 
-                const [rows] = await pool.execute(sql, [date]);
+                const [rows] = await pool.execute(sql, [mysqlDate]);
 
                 if (rows.length === 0) {
                     return res.status(204).json({
@@ -51,9 +54,16 @@ exports.getDeptOffsetting = async (req, res) => {
                     });
                 }
 
+                // Format dates in the response
+                const formattedRows = rows.map(row => ({
+                    ...row,
+                    month_year: moment(row.month_year).format('YYYY-MM-DD HH:mm:ss'),
+                    created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss')
+                }));
+
                 return res.json({
                     status: "success",
-                    data: rows
+                    data: formattedRows
                 });
             } else {
                 return res.status(400).json({
@@ -75,7 +85,8 @@ exports.getDeptOffsetting = async (req, res) => {
                 ORDER BY created_at ASC
             `;
 
-            const [rows] = await pool.execute(sql, [date, credential]);
+            const queryParams = [mysqlDate, credential];
+            const [rows] = await pool.execute(sql, queryParams);
 
             if (rows.length === 0) {
                 return res.status(204).json({
@@ -84,9 +95,16 @@ exports.getDeptOffsetting = async (req, res) => {
                 });
             }
 
+            // Format dates in the response
+            const formattedRows = rows.map(row => ({
+                ...row,
+                month_year: moment(row.month_year).format('YYYY-MM-DD HH:mm:ss'),
+                created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss')
+            }));
+
             return res.json({
                 status: "success",
-                data: rows
+                data: formattedRows
             });
         }
     } catch (error) {

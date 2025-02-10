@@ -13,14 +13,26 @@ exports.getTollStationPasses = async (req, res) => {
             });
         }
 
-        // Validate date format
-        if (!moment(date_from, 'YYYY-MM-DD', true).isValid() || 
-            !moment(date_to, 'YYYY-MM-DD', true).isValid()) {
+        // Validate date format (YYYYMMDD)
+        if (!moment(date_from, 'YYYYMMDD', true).isValid() || 
+            !moment(date_to, 'YYYYMMDD', true).isValid()) {
             return res.status(400).json({
                 status: "failed",
-                message: "Invalid date format. Use YYYY-MM-DD"
+                message: "Invalid date format. Use YYYYMMDD"
             });
         }
+
+        // Check if date_from is after date_to
+        if (moment(date_from, 'YYYYMMDD').isAfter(moment(date_to, 'YYYYMMDD'))) {
+            return res.status(400).json({
+                status: "failed",
+                message: "Date from cannot be after date to"
+            });
+        }
+
+        // Convert dates to MySQL format (YYYY-MM-DD)
+        const mysqlDateFrom = moment(date_from, 'YYYYMMDD').format('YYYY-MM-DD');
+        const mysqlDateTo = moment(date_to, 'YYYYMMDD').format('YYYY-MM-DD');
 
         // First get the operator_id from Tolls table
         const [tollStation] = await pool.execute(
@@ -48,7 +60,7 @@ exports.getTollStationPasses = async (req, res) => {
             ORDER BY timestamp ASC;
         `;
 
-        const [rows] = await pool.execute(sql, [tollStationID, date_from, date_to]);
+        const [rows] = await pool.execute(sql, [tollStationID, mysqlDateFrom, mysqlDateTo]);
 
         // Check if any passes found
         if (rows.length === 0) {
@@ -73,8 +85,8 @@ exports.getTollStationPasses = async (req, res) => {
             StationID: tollStationID,
             stationOperator: operator_id,
             requestTimestamp: moment().format('YYYY-MM-DD HH:mm'),
-            periodFrom: date_from,
-            periodTo: date_to,
+            periodFrom: mysqlDateFrom,
+            periodTo: mysqlDateTo,
             nPasses: passList.length,
             passList
         });
