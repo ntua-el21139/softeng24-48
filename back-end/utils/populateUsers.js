@@ -4,12 +4,15 @@ async function populateUsers() {
     const dbHandler = new DBHandler();
     
     try {
+        console.log('Attempting to connect to database...');
         await dbHandler.connect();
+        console.log('Database connection established');
 
         // First delete existing records
         console.log('Cleaning up existing users...');
         await dbHandler.connection.execute('DELETE FROM Users WHERE role_id = 2');  // Delete operators
         await dbHandler.connection.execute('DELETE FROM Users WHERE role_id = 1');  // Delete admin
+        console.log('Cleanup completed');
 
         const users = [
             { username: 'admin', password: 'password', role_id: 1, operator_id: null },
@@ -30,6 +33,7 @@ async function populateUsers() {
 
         console.log('Inserting new users...');
         for (const user of users) {
+            console.log(`Inserting user: ${user.username} (role_id: ${user.role_id}, operator_id: ${user.operator_id || 'null'})`);
             await dbHandler.connection.execute(insertQuery, [
                 user.username,
                 user.password,
@@ -43,24 +47,24 @@ async function populateUsers() {
         console.error('Error populating users:', error);
         throw error;
     } finally {
+        console.log('Closing database connection...');
         await dbHandler.disconnect();
+        console.log('Database connection closed');
     }
 }
 
-async function populateDatabase() {
-    try {
-        console.log('Starting database population...');
-        
-        // Populate users
-        await populateUsers();
-        
-        console.log('Database population completed successfully!');
-        process.exit(0);
-    } catch (error) {
-        console.error('Error during database population:', error);
-        process.exit(1);
-    }
-}
-
-// Execute the population
-populateDatabase(); 
+// Execute if this script is run directly
+if (require.main === module) {
+    console.log('Starting users population script...');
+    populateUsers()
+        .then(() => {
+            console.log('User population completed successfully!');
+            process.exit(0);
+        })
+        .catch(error => {
+            console.error('Error during user population:', error);
+            process.exit(1);
+        });
+} else {
+    module.exports = populateUsers;
+} 
