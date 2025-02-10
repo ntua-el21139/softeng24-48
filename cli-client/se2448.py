@@ -9,6 +9,7 @@ from api_client import APIClient
 import requests
 import config
 import os
+from getpass import getpass  # Add this import for hidden password input
 
 class InterTollCLI(cmd.Cmd):
     intro = """
@@ -25,6 +26,34 @@ class InterTollCLI(cmd.Cmd):
     def __init__(self):
         super().__init__()
         self.api_client = APIClient()
+        self.authenticated = False
+
+    def authenticate(self):
+        """Handle user authentication"""
+        while not self.authenticated:
+            print("\nPlease login to continue:")
+            username = input("Username: ")
+            password = getpass("Password: ")  # This will hide the password input
+
+            try:
+                url = f"{config.API_BASE_URL}/api/extra/fetchUser/{username}/{password}"
+                response = requests.get(url)
+                
+                if response.status_code == 200:
+                    self.authenticated = True
+                    print("\n✅ Login successful!")
+                elif response.status_code == 401:
+                    print("\n❌ Invalid username or password")
+                else:
+                    print(f"\n❌ Error: Server returned status code {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                print(f"\n❌ Error connecting to server: {e}")
+
+    def cmdloop(self, intro=None):
+        """Override cmdloop to add authentication"""
+        self.authenticate()
+        if self.authenticated:
+            super().cmdloop(intro)
 
     def do_1(self, arg):
         """Run CLI commands"""
@@ -578,21 +607,25 @@ def main():
         except KeyboardInterrupt:
             print("\nGoodbye!")
     else:
-        command = args[0]
-        if command == 'healthcheck':
-            handle_healthcheck(config.API_BASE_URL, config.ENDPOINTS)
-        elif command == 'tollstationpasses':
-            handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif command == 'passanalysis':
-            handle_passanalysis(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif command == 'passescost':
-            handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif command == 'chargesby':
-            handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif command == 'admin':
-            handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        else:
-            print_help() 
+        # For command line arguments, we'll require authentication first
+        cli = InterTollCLI()
+        cli.authenticate()
+        if cli.authenticated:
+            command = args[0]
+            if command == 'healthcheck':
+                handle_healthcheck(config.API_BASE_URL, config.ENDPOINTS)
+            elif command == 'tollstationpasses':
+                handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif command == 'passanalysis':
+                handle_passanalysis(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif command == 'passescost':
+                handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif command == 'chargesby':
+                handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif command == 'admin':
+                handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            else:
+                print_help()
 
 if __name__ == '__main__':
     main() 
