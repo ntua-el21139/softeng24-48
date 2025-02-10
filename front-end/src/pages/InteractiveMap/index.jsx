@@ -2,9 +2,9 @@ import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { LoadScript, GoogleMap, Marker, InfoWindow, OverlayView } from '@react-google-maps/api';
-import Papa from 'papaparse';
 
-const libraries = ['places'];
+const libraries = ['places', 'marker'];
+const MAP_ID = 'AIzaSyBnva_tnIVwDQb-XVBDBvin1AmgiXcImD8';
 
 const InteractiveMap = () => {
   const [markers, setMarkers] = useState([]);
@@ -55,66 +55,60 @@ const InteractiveMap = () => {
     scaleControl: true,
     streetViewControl: true,
     rotateControl: true,
-    fullscreenControl: true
+    fullscreenControl: true,
+    mapId: MAP_ID
   }), []);
 
-  const filteredMarkers = useMemo(() => 
-    selectedOperator === 'all' 
-      ? markers 
-      : markers.filter(marker => marker.operator === selectedOperator),
-    [markers, selectedOperator]
-  );
+  const filteredMarkers = useMemo(() => {
+    if (selectedOperator === 'all') {
+      return markers;
+    }
+    
+    return markers.filter(marker => marker.operator_name === selectedOperator);
+  }, [markers, selectedOperator]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('/tollstations2024.csv');
+        const response = await fetch('http://localhost:9115/api/extra/mapSupply');
         if (!response.ok) {
-          throw new Error('Failed to fetch CSV data');
+          throw new Error('Failed to fetch station data');
         }
-        const csvData = await response.text();
-        Papa.parse(csvData, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            const uniqueOperators = [...new Set(results.data
-              .map(station => station.Operator)
-              .filter(operator => operator && operator.trim() !== '')
-            )];
-            setOperators(uniqueOperators);
-            
-            const parsedMarkers = results.data
-              .filter(station => station.Lat && station.Long)
-              .map(station => ({
-                position: {
-                  lat: parseFloat(station.Lat),
-                  lng: parseFloat(station.Long)
-                },
-                title: station.Name,
-                operator: station.Operator,
-                id: station.TollID,
-                details: {
-                  Name: station.Name,
-                  Operator: station.Operator,
-                  TollID: station.TollID,
-                  PM: station.PM,
-                  Locality: station.Locality,
-                  Road: station.Road,
-                  Price1: station.Price1,
-                  Price2: station.Price2,
-                  Price3: station.Price3,
-                  Price4: station.Price4
-                }
-              }));
-            setMarkers(parsedMarkers);
-            setIsLoading(false);
-          },
-          error: (error) => {
-            setError('Error parsing CSV: ' + error.message);
-            setIsLoading(false);
-          }
-        });
+        
+        const result = await response.json();
+        const data = result.data || result;
+        
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format received from API');
+        }
+
+        const uniqueOperators = [...new Set(data
+          .map(station => station.operator_name)
+          .filter(Boolean)
+        )];
+        setOperators(uniqueOperators);
+        
+        const parsedMarkers = data
+          .filter(station => station.lat && station.longt)
+          .map(station => ({
+            position: {
+              lat: parseFloat(station.lat),
+              lng: parseFloat(station.longt)
+            },
+            title: station.station_name || '',
+            operator_name: station.operator_name,
+            id: station.station_id,
+            details: {
+              Name: station.station_name || '',
+              Operator: station.operator_name,
+              TollID: station.station_id,
+              Price: station.price2 || ''
+            }
+          }));
+        setMarkers(parsedMarkers);
+        setIsLoading(false);
       } catch (err) {
+        console.error('Full error:', err);
         setError('Error loading data: ' + err.message);
         setIsLoading(false);
       }
@@ -125,6 +119,14 @@ const InteractiveMap = () => {
       setSelectedMarker(null);
     };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.markers?.forEach(marker => marker.setMap(null));
+      }
+    };
+  }, [filteredMarkers]);
 
   if (error) {
     return <div className="text-red-500 text-center mt-4">Error: {error}</div>;
@@ -183,7 +185,7 @@ const InteractiveMap = () => {
           ) : (
             <div className="relative mt-2">
               <LoadScript 
-                googleMapsApiKey="AIzaSyBnva_tnIVwDQb-XVBDBvin1AmgiXcImD8"
+                googleMapsApiKey={MAP_ID}
                 libraries={libraries}
                 loadingElement={<div>Loading map...</div>}
               >
@@ -195,6 +197,7 @@ const InteractiveMap = () => {
                   onLoad={onLoad}
                   onUnmount={onUnmount}
                   onClick={handleCloseClick}
+                  mapId={MAP_ID}
                 >
                   <OperatorControl />
                   {filteredMarkers.map(marker => (
@@ -235,37 +238,8 @@ const InteractiveMap = () => {
                             <span className="font-medium">{selectedMarker.details.TollID}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">PM:</span>
-                            <span className="font-medium">{selectedMarker.details.PM}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Locality:</span>
-                            <span className="font-medium">{selectedMarker.details.Locality}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Road:</span>
-                            <span className="font-medium">{selectedMarker.details.Road}</span>
-                          </div>
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <h4 className="text-gray-800 font-semibold mb-2">Prices:</h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Price 1:</span>
-                              <span className="font-medium">{selectedMarker.details.Price1}€</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Price 2:</span>
-                              <span className="font-medium">{selectedMarker.details.Price2}€</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Price 3:</span>
-                              <span className="font-medium">{selectedMarker.details.Price3}€</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Price 4:</span>
-                              <span className="font-medium">{selectedMarker.details.Price4}€</span>
-                            </div>
+                            <span className="text-gray-600">Price:</span>
+                            <span className="font-medium">{selectedMarker.details.Price}€</span>
                           </div>
                         </div>
                       </div>
