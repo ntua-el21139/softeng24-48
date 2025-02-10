@@ -54,5 +54,7 @@ CREATE TABLE Passes (
     operator_id VARCHAR(10),
     charge DOUBLE(4,2),
     FOREIGN KEY (toll_id) REFERENCES Tolls(toll_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
     -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)  -- Commented out properly with comma if uncommented
 );
