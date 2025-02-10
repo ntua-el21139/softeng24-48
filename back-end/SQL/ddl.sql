@@ -2,8 +2,6 @@ USE interToll;
 
 -- Drop tables in the correct order to avoid foreign key constraint issues
 DROP TABLE IF EXISTS Monthly_Debts;
--- Drop tables in the correct order to avoid foreign key constraint issues
-DROP TABLE IF EXISTS Monthly_Debts;
 DROP TABLE IF EXISTS Passes;
 DROP TABLE IF EXISTS Tolls;
 DROP TABLE IF EXISTS Users;
@@ -45,8 +43,7 @@ CREATE TABLE Tolls (
     longt VARCHAR(50),
     email VARCHAR(50),
     price DOUBLE(4,2)
-    -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)  -- This now correctly references Users table
-    -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)  -- This now correctly references Users table
+    -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
 );
 
 CREATE TABLE Passes (
@@ -60,9 +57,6 @@ CREATE TABLE Passes (
     FOREIGN KEY (toll_id) REFERENCES Tolls(toll_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
-        ON UPDATE CASCADE
-    -- Temporarily commenting out this constraint until Users table is populated
-    -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
 );
 
 CREATE TABLE Monthly_Debts (

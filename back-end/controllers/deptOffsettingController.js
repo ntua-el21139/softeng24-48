@@ -62,10 +62,36 @@ exports.getDeptOffsetting = async (req, res) => {
                 });
             }      
         } else {
-            // Handle station operator logic here
+            const sql = `
+                SELECT 
+                    id,
+                    debtor_operator_id,
+                    creditor_operator_id,
+                    amount,
+                    month_year,
+                    created_at
+                FROM Monthly_Debts
+                WHERE DATE_FORMAT(month_year, '%Y-%m') = ? AND debtor_operator_id = ?
+                ORDER BY created_at ASC
+            `;
+
+            const [rows] = await pool.execute(sql, [date, credential]);
+
+            if (rows.length === 0) {
+                return res.status(204).json({
+                    status: "failed",
+                    message: "No debts found for the specified month"
+                });
+            }
+
+            return res.json({
+                status: "success",
+                data: rows
+            });
         }
     } catch (error) {
         console.error("Database error:", error);
+
         res.status(500).json({
             status: "failed",
             message: "Internal server error",
