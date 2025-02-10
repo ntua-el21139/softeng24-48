@@ -7,7 +7,7 @@ INSERT INTO Permissions (data_scope, access_type) VALUES
 
 -- Then insert roles with their corresponding permissions
 INSERT INTO Roles (role_name, permission_id) VALUES
-('Admin', 1),
-('Toll Operator', 2),
-('Analyst', 3),
-('Business', 4); 
+('Admin', 1),              -- Admin role with full access
+('Toll Operator', 2),      -- Operator role with own data access
+('Analyst', 3),           -- Analyst role with read-only access
+('Business', 4);          -- Business role with anonymized access 

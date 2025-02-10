@@ -27,7 +27,8 @@ CREATE TABLE Users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role_id INT NOT NULL,
-    operator_id VARCHAR(10) UNIQUE  -- Only applicable for toll operators (must be UNIQUE)
+    operator_id VARCHAR(10) UNIQUE,  -- Only applicable for toll operators (must be UNIQUE)
+    FOREIGN KEY (role_id) REFERENCES Roles(role_id)
 );
 
 CREATE TABLE Tolls (
@@ -41,8 +42,8 @@ CREATE TABLE Tolls (
     lat VARCHAR(50),
     longt VARCHAR(50),
     email VARCHAR(50),
-    price DOUBLE(4,2)
-    -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)  -- This now correctly references Users table
+    price DOUBLE(4,2),
+    FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
 );
 
 CREATE TABLE Passes (
@@ -53,11 +54,8 @@ CREATE TABLE Passes (
     tag_home_id VARCHAR(10),
     operator_id VARCHAR(10),
     charge DOUBLE(4,2),
-    FOREIGN KEY (toll_id) REFERENCES Tolls(toll_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-    -- Temporarily commenting out this constraint until Users table is populated
-    -- FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
+    FOREIGN KEY (toll_id) REFERENCES Tolls(toll_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (operator_id) REFERENCES Users(operator_id)
 );
 
 CREATE TABLE Monthly_Debts (
