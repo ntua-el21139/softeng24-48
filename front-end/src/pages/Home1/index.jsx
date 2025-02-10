@@ -19,22 +19,6 @@ export default function Home1Page() {
       </Helmet>
 
       <div className="flex w-full flex-col bg-gradient">
-        {/* Header Section */}
-        <div className="w-[1440px] h-[70px] bg-[#01011F] mx-auto">
-          <div className="flex items-center justify-between h-full px-8">
-            <Heading as="h4" className="text-[1.50rem] font-semibold text-white md:text-[1.38rem]">
-              Welcome Back: Attiki Odos
-            </Heading>
-
-            <div 
-              className="text-[1.25rem] font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors"
-              onClick={handleLogout}
-            >
-              Log Out
-            </div>
-          </div>
-        </div>
-
         {/* Center Logo */}
         <div className="flex justify-center items-center py-2 mt-8">
           <img 

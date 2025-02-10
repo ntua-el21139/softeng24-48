@@ -1,0 +1,119 @@
+/* Base Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  html {
+    @apply text-base;
+  }
+
+  body {
+    @apply overflow-x-hidden m-0 p-0;
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  .container-padding {
+    @apply px-4 md:px-6 lg:px-8;
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  .no-horizontal-scroll {
+    @apply max-w-full overflow-x-hidden;
+  }
+
+  /* Better text scaling */
+  .scale-text {
+    font-size: clamp(0.875rem, 2vw, 1.5rem);
+  }
+  
+  /* Flexible padding */
+  .responsive-padding {
+    padding: clamp(1rem, 3vw, 2rem);
+  }
+  
+  /* Flexible margins */
+  .responsive-margin {
+    margin: clamp(1rem, 3vw, 2rem);
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+/* Custom components */
+@layer components {
+  /* Responsive container */
+  .container-fluid {
+    @apply w-full mx-auto;
+  }
+
+  /* Add a new class for pages that need padding */
+  .container-fluid-padded {
+    @apply w-full mx-auto px-4 md:px-6 lg:px-8 max-w-[1440px];
+  }
+
+  /* Responsive grid */
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6;
+  }
+
+  /* Responsive text */
+  .responsive-text {
+    @apply text-base md:text-lg lg:text-xl;
+  }
+
+  /* Touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Custom styles outside layers */
+/* Fix zoom issues */
+@media screen and (max-width: 480px) {
+  html {
+    -webkit-text-size-adjust: none;
+  }
+}
+
+/* Ensure minimum touch target size */
+button, 
+a, 
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent content from breaking layout */
+img, 
+video, 
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fluid spacing utilities */
+.fluid-padding {
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.fluid-margin {
+  margin: clamp(1rem, 3vw, 2rem);
+}
+
+/* Fluid typography */
+.fluid-text {
+  font-size: clamp(0.875rem, 2vw, 1.5rem);
+} 

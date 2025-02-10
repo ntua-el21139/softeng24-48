@@ -543,21 +543,29 @@ def handle_admin(base_url, endpoints, options):
             api_client = APIClient()
             result = api_client.addpasses(source)
             
-            if result.get('status') == 'OK':
-                print("\n✅ Success: Passes added successfully")
+            if isinstance(result, dict):
+                if result.get('status') == 'OK':
+                    print("\n✅ Success: Passes added successfully")
+                    if 'info' in result:
+                        print(f"Info: {result['info']}")
+                else:
+                    print("\n❌ Error:")
+                    if 'message' in result:
+                        print(f"Message: {result['message']}")
+                    if 'error' in result:
+                        print(f"Error: {result['error']}")
+                    if 'info' in result:
+                        print(f"Info: {result['info']}")
             else:
-                print("\n❌ Error:")
-                if 'message' in result:
-                    print(f"Message: {result['message']}")
-                if 'info' in result:
-                    print(f"Info: {result['info']}")
-        else:
-            print("Unknown admin command. Available commands: --addpasses")
+                print("\n❌ Error: Unexpected response format from API")
+                print(f"Response: {result}")
             
     except FileNotFoundError:
         print(f"❌ Error: File not found: {source}")
     except json.JSONDecodeError:
-        print("❌ Error: Invalid response from server")
+        print("❌ Error: Invalid JSON response from server")
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error: API request failed - {str(e)}")
     except Exception as e:
         print(f"❌ Error: {str(e)}")
 

@@ -26,7 +26,7 @@ export default function ImportTollDataColumn({
     <div
       {...props}
       onClick={handleClick}
-      className={`${props.className} flex flex-col h-[238px] w-[226px] px-6 py-8 bg-[#4A4A9A] rounded-[16px] hover:scale-105 transition-transform shadow-lg relative cursor-pointer`}
+      className={`${props.className} flex flex-col h-auto min-h-[238px] w-full max-w-[226px] px-4 md:px-6 py-6 md:py-8 bg-[#4A4A9A] rounded-[16px] hover:scale-105 transition-transform shadow-lg relative cursor-pointer`}
     >
       <div className="flex flex-col items-center h-full">
         <div className="flex-1 flex items-center">
@@ -39,7 +39,7 @@ export default function ImportTollDataColumn({
         <div>
           <Heading
             as="h4"
-            className="text-xl font-medium tracking-[0.00rem] text-white text-center"
+            className="text-lg md:text-xl font-medium tracking-[0.00rem] text-white text-center"
           >
             {importTitle}
           </Heading>
