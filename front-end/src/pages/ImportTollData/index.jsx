@@ -167,9 +167,9 @@ export default function ImportTollDataPage() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => document.getElementById('fileInput').click()}
-              className={`mt-4 flex flex-col items-center gap-4 self-stretch rounded-[16px] border-2 border-dashed ${
+              className={`mt-4 flex flex-col items-center gap-6 rounded-[16px] border-2 border-dashed ${
                 isDragging ? 'border-[#2D7EFF] bg-[#4A4A9A]/90' : 'border-gray-900_75 bg-[#4A4A9A]'
-              } px-[3.50rem] py-8 shadow-xs md:p-[1.25rem] cursor-pointer transition-all duration-200 hover:border-[#2D7EFF]`}
+              } px-8 py-12 shadow-xs cursor-pointer transition-all duration-200 hover:border-[#2D7EFF] w-[300px] h-[354px] mx-auto md:w-full md:h-[300px]`}
             >
               <input
                 type="file"
@@ -182,21 +182,21 @@ export default function ImportTollDataPage() {
               <Img
                 src="/images/ img_group_indigo_50_100x114.svg"
                 alt="Image"
-                className="h-20 w-[22%] object-contain"
+                className="h-20 w-20 object-contain"
               />
 
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center gap-2">
                 <Heading
                   size="headingmd"
                   as="h1"
-                  className="text-[2.00rem] font-semibold text-white md:text-[1.88rem] sm:text-[1.75rem]"
+                  className="text-2xl md:text-3xl font-semibold text-white text-center"
                 >
                   {selectedFile ? selectedFile.name : "Drag and drop or click here"}
                 </Heading>
                 <Heading 
                   size="headingxs" 
                   as="h2" 
-                  className="text-[1.25rem] font-semibold text-white"
+                  className="text-lg md:text-xl font-semibold text-white text-center"
                 >
                   {selectedFile ? "File selected" : "to upload your CSV file"}
                 </Heading>

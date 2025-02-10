@@ -28,20 +28,24 @@ export default function DebtSummary({
   return (
     <div
       {...props}
-      className={`${props.className} flex flex-col items-center w-[320px] h-[280px] rounded-[16px] text-white`}
+      className={`${props.className} flex flex-col items-center w-full max-w-[320px] min-h-[280px] rounded-[16px] text-white`}
     >
-      <Heading size="headingmd" as="h2" className="mt-4 text-[1.75rem] font-semibold text-white">
+      <Heading 
+        size="headingmd" 
+        as="h2" 
+        className="mt-4 text-lg md:text-[1.75rem] font-semibold text-white"
+      >
         {data.headerText}
       </Heading>
 
-      <div className="flex-1 w-full px-6 mt-3">
+      <div className="flex-1 w-full px-3 md:px-6 mt-3">
         {data.items.map((item, index) => (
           <React.Fragment key={index}>
             <div className="flex justify-between items-center py-1">
-              <Heading as="h4" className="text-[1.25rem] font-semibold text-white">
+              <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
                 {item.label}
               </Heading>
-              <Heading as="h4" className="text-[1.25rem] font-semibold text-white">
+              <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
                 {item.amount}
               </Heading>
             </div>
@@ -52,11 +56,11 @@ export default function DebtSummary({
         ))}
       </div>
 
-      <div className="w-full flex justify-between items-center px-6 py-3 mt-auto bg-opacity-20 bg-black rounded-b-[16px]">
-        <Heading as="h4" className="text-[1.25rem] font-semibold text-white">
+      <div className="w-full flex justify-between items-center px-3 md:px-6 py-3 mt-auto bg-opacity-20 bg-black rounded-b-[16px]">
+        <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
           {data.totalLabel}
         </Heading>
-        <Heading as="h4" className="text-[1.25rem] font-semibold text-white">
+        <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
           {data.totalAmount}
         </Heading>
       </div>
