@@ -64,15 +64,16 @@ export default function StatisticsColumn() {
   };
 
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split('T')[0].replace(/-/g, '');
   };
 
   const fetchData = async () => {
     try {
-      // Use selectedStation which contains the toll_id from the selected toll name
-      const url = `http://localhost:9115/api/tollStationPasses/${selectedStation}/${formatDate(startDate)}/${formatDate(endDate)}`;
+      const formattedStartDate = formatDate(startDate);
+      const formattedEndDate = formatDate(endDate);
+      
+      const url = `http://localhost:9115/api/tollStationPasses/${selectedStation}/${formattedStartDate}/${formattedEndDate}`;
       console.log('Fetching data from:', url);
-      console.log('Using toll_id:', selectedStation); // Add this for debugging
       
       const response = await axios.get(url);
       console.log('API Response:', response.data);
@@ -176,15 +177,15 @@ export default function StatisticsColumn() {
     <div className="flex flex-col items-center">
       <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
         {/* Selection Controls */}
-        <div className="flex gap-4 justify-between w-[600px]">
+        <div className="grid grid-cols-2 gap-4 w-[620px]">
           {/* Toll Names Selection */}
           <div className="relative">
             <button 
-              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-[300px] h-[48px]"
+              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-full h-[48px]"
               onClick={() => setShowTollDropdown(!showTollDropdown)}
             >
               <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                {selectedTollName || (tollNames.length > 0 ? `Select ${selectedRegion} Toll Station` : `Loading ${selectedRegion} Stations...`)}
+                {selectedTollName || (tollNames.length > 0 ? `Select Toll Station` : `Loading Toll Stations...`)}
               </span>
               <span className="text-xl ml-2">›</span>
             </button>
@@ -207,7 +208,7 @@ export default function StatisticsColumn() {
           {/* Date Selection Button */}
           <div className="relative">
             <button 
-              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-[300px] h-[48px]"
+              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-full h-[48px]"
               onClick={() => setShowDatePicker(!showDatePicker)}
             >
               <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
@@ -270,7 +271,7 @@ export default function StatisticsColumn() {
               </BarChart>
             ) : (
               <span className="text-gray-500 text-lg">
-                Select parameters and click search to view statistics
+                Select parameters to view statistics
               </span>
             )}
           </div>
