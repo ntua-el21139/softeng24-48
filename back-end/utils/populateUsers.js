@@ -10,6 +10,8 @@ async function populateUsers() {
         console.log('Cleaning up existing users...');
         await dbHandler.connection.execute('DELETE FROM Users WHERE role_id = 2');  // Delete operators
         await dbHandler.connection.execute('DELETE FROM Users WHERE role_id = 1');  // Delete admin
+        await dbHandler.connection.execute('DELETE FROM Users WHERE role_id = 3');
+        await dbHandler.connection.execute('DELETE FROM Users WHERE role_id = 4');
 
         const users = [
             { username: 'admin', password: 'password', role_id: 1, operator_id: null },
@@ -20,7 +22,9 @@ async function populateUsers() {
             { username: 'moreas', password: 'password', role_id: 2, operator_id: 'MO' },
             { username: 'naodos', password: 'password', role_id: 2, operator_id: 'NAO' },
             { username: 'neaodos', password: 'password', role_id: 2, operator_id: 'NO' },
-            { username: 'olympiaodos', password: 'password', role_id: 2, operator_id: 'OO' }
+            { username: 'olympiaodos', password: 'password', role_id: 2, operator_id: 'OO' },
+            { username: 'analyst', password: 'password', role_id: 3, operator_id: null },
+            { username: 'business', password: 'password', role_id: 4, operator_id: null },
         ];
 
         const insertQuery = `

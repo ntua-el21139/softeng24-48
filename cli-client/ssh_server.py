@@ -18,25 +18,18 @@ import requests
 class InterTollSSHServer(paramiko.ServerInterface):
     def __init__(self):
         self.event = threading.Event()
-        self.authenticated = False
 
     def check_auth_password(self, username, password):
-        try:
-            url = f"{config.API_BASE_URL}/api/extra/fetchUser/{username}/{password}"
-            response = requests.get(url)
-            
-            if response.status_code == 200:
-                self.authenticated = True
-                return paramiko.AUTH_SUCCESSFUL
-            elif response.status_code == 401:
-                print(f"\n❌ Invalid username or password for {username}")
-                return paramiko.AUTH_FAILED
-            else:
-                print(f"\n❌ Error: Server returned status code {response.status_code}")
-                return paramiko.AUTH_FAILED
-        except requests.exceptions.RequestException as e:
-            print(f"\n❌ Error connecting to server: {e}")
-            return paramiko.AUTH_FAILED
+        # Accept any username/password combination
+        return paramiko.AUTH_SUCCESSFUL
+
+    def get_allowed_auths(self, username):
+        # Allow connection without authentication
+        return 'none'
+
+    def check_auth_none(self, username):
+        # Allow connection without authentication
+        return paramiko.AUTH_SUCCESSFUL
 
     def check_channel_request(self, kind, chanid):
         if kind == "session":
@@ -95,7 +88,6 @@ def handle_client(client, addr):
         
         # Create CLI instance with API client
         cli = InterTollCLI()
-        cli.authenticated = server.authenticated  # Transfer authentication state
         api_client = cli.api_client
         
         # Send welcome message
@@ -124,38 +116,32 @@ def handle_client(client, addr):
                         channel.send('Goodbye!\r\n')
                         break
                     
-                    # Check if it's a direct se2448 command
-                    args = initial_cmd.split()
-                    if args and args[0].lower() == 'se2448':
-                        try:
-                            # Pass all arguments to handle_command, format will default to CSV if not specified
-                            cli.handle_command(args[1:])
-                        except Exception as e:
-                            print(f"Error executing command: {str(e)}")
-                        finally:
-                            output_catcher.flush()
-                    # Handle menu options
-                    elif initial_cmd == '1':
+                    if initial_cmd == '1':
+                        # Show instructions once when entering command mode
+                        print("\nEnter your command after the prompt below.")
+                        print("Example formats:")
+                        print("  se2448 healthcheck")
+                        print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131")
+                        print("  se2448 passanalysis --stationop OP01 --tagop TAG01 --from 20220101 --to 20220131")
+                        print("  se2448 passescost --stationop OP01 --tagop TAG01 --from 20220101 --to 20220131")
+                        print("  se2448 chargesby --opid OP01 --from 20220101 --to 20220131")
+                        print("  se2448 admin --addpasses --source /path/to/passes.json")
+                        print("  Type 'back' to return to main menu\n")
+                        
                         while True:
-                            # Show the command prompt
-                            print("\nEnter your command after the prompt below.")
-                            print("Example formats:")
-                            print("  se2448 healthcheck                    # defaults to CSV output")
-                            print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131")
-                            print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131 --format json\n")
-                            
-                            # Get the actual command
                             channel.send('Enter your command: ')
                             actual_cmd = read_command(channel)
                             if actual_cmd:
-                                # Clean and parse the command
                                 actual_cmd = actual_cmd.strip()
+                                
+                                if actual_cmd.lower() == 'back':
+                                    print("\n" + cli.intro)
+                                    break
+                                
                                 if actual_cmd:  # Make sure command isn't empty after stripping
                                     args = actual_cmd.split()
-                                    # Case-insensitive check for 'se2448'
                                     if args and args[0].lower() == 'se2448':
                                         try:
-                                            # Pass all arguments to handle_command, format will default to CSV if not specified
                                             cli.handle_command(args[1:])
                                         except Exception as e:
                                             print(f"Error executing command: {str(e)}")
@@ -164,14 +150,6 @@ def handle_client(client, addr):
                                     else:
                                         print("Commands must start with 'se2448'")
                                         output_catcher.flush()
-                                
-                                print("\nPress any key to return to main menu...")
-                                channel.recv(1)
-                                
-                                print("\n")
-                                for line in cli.intro.split('\n'):
-                                    print(line)
-                                break
                     
                     elif initial_cmd == '2':
                         cli.do_2('')  # Show help
@@ -311,9 +289,9 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
             print("Install 'netifaces' package for detailed network interface information")
         
         print('\nConnection instructions:')
-        print(f'1. From this machine: ssh -p {port} username@localhost')
-        print(f'2. From local network: ssh -p {port} username@<LAN_IP>')
-        print('Note: Any username/password combination will work for testing')
+        print(f'1. From this machine: ssh -p {port} localhost -o PreferredAuthentications=none')
+        print(f'2. From local network: ssh -p {port} <LAN_IP> -o PreferredAuthentications=none')
+        print('Note: No username or password required')
         print('\nTroubleshooting:')
         print('1. Make sure your firewall allows incoming connections on port 2222')
         print('2. Try these commands to allow Python through the firewall:')
