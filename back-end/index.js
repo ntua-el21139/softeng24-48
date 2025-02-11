@@ -18,40 +18,20 @@ const sslOptions = {
 
 // Start SSH server
 const startSSHServer = () => {
-  try {
-    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
-    const sshServerPath = path.join(__dirname, '..', 'cli-client', 'ssh_server.py');
-    
-    // Check if the SSH server file exists
-    if (!fs.existsSync(sshServerPath)) {
-      console.log('SSH server script not found. Skipping SSH server start.');
-      return;
-    }
+  const sshServerPath = path.join(__dirname, '..', 'cli-client', 'ssh_server.py');
+  const pythonProcess = spawn('python3', [sshServerPath]);
 
-    const pythonProcess = spawn(pythonCommand, [sshServerPath]);
+  pythonProcess.stdout.on('data', (data) => {
+    console.log(`SSH Server: ${data}`);
+  });
 
-    pythonProcess.stdout.on('data', (data) => {
-      console.log(`SSH Server: ${data}`);
-    });
+  pythonProcess.stderr.on('data', (data) => {
+    console.error(`SSH Server Error: ${data}`);
+  });
 
-    pythonProcess.stderr.on('data', (data) => {
-      console.error(`SSH Server Error: ${data}`);
-    });
-
-    pythonProcess.on('close', (code) => {
-      if (code !== 0) {
-        console.log(`SSH Server process exited with code ${code}. SSH functionality may not be available.`);
-      } else {
-        console.log('SSH Server started successfully');
-      }
-    });
-
-    pythonProcess.on('error', (err) => {
-      console.log(`Failed to start SSH Server: ${err.message}. SSH functionality may not be available.`);
-    });
-  } catch (error) {
-    console.log(`Error starting SSH Server: ${error.message}. SSH functionality may not be available.`);
-  }
+  pythonProcess.on('close', (code) => {
+    console.log(`SSH Server process exited with code ${code}`);
+  });
 };
 
 // Middleware
