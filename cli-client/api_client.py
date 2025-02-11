@@ -15,7 +15,6 @@ class APIClient:
         """Call the healthcheck endpoint"""
         try:
             url = f"{self.base_url}{ENDPOINTS['healthcheck']}"
-            print(f"Attempting to connect to: {url}")
             response = self.session.get(url)
             response.raise_for_status()  # Raise an exception for bad status codes
             
@@ -86,7 +85,6 @@ class APIClient:
                 
                 # Use the correct endpoint path from config
                 url = f"{self.base_url}{ENDPOINTS['admin']['addpasses']}"
-                print(f"Sending request to: {url}")
                 
                 response = self.session.post(url, files=files)
                 return response.json()

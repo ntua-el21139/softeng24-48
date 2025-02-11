@@ -1,4 +1,13 @@
 {
+  "name": "intertoll",
+  "version": "1.0.0",
+  "description": "InterToll System",
+  "scripts": {
+    "start-frontend": "cd front-end && npm run dev",
+    "start-backend": "cd back-end && node index.js",
+    "start-cli": "cd cli-client && python3 se2448.py",
+    "start": "npx concurrently \"npm run start-frontend\" \"npm run start-backend\" \"npm run start-cli\""
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
@@ -11,17 +20,13 @@
     "mysql2": "^3.12.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "concurrently": "^8.2.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.1.4",
     "vite-tsconfig-paths": "^5.1.4"
-  },
-  "scripts": {
-    "start": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
   },
   "type": "module"
 }

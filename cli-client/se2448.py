@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import click
 import json
 import csv
@@ -26,72 +27,40 @@ class InterTollCLI(cmd.Cmd):
     def __init__(self):
         super().__init__()
         self.api_client = APIClient()
-        self.authenticated = False
-
-    def authenticate(self):
-        """Handle user authentication"""
-        while not self.authenticated:
-            print("\nPlease login to continue:")
-            username = input("Username: ")
-            password = getpass("Password: ")  # This will hide the password input
-
-            try:
-                url = f"{config.API_BASE_URL}/api/extra/fetchUser/{username}/{password}"
-                response = requests.get(url)
-                
-                if response.status_code == 200:
-                    self.authenticated = True
-                    print("\n✅ Login successful!")
-                elif response.status_code == 401:
-                    print("\n❌ Invalid username or password")
-                else:
-                    print(f"\n❌ Error: Server returned status code {response.status_code}")
-            except requests.exceptions.RequestException as e:
-                print(f"\n❌ Error connecting to server: {e}")
 
     def cmdloop(self, intro=None):
-        """Override cmdloop to add authentication"""
-        self.authenticate()
-        if self.authenticated:
-            super().cmdloop(intro)
+        """Override cmdloop to start directly"""
+        super().cmdloop(intro)
 
     def do_1(self, arg):
         """Run CLI commands"""
-        while True:  # Add loop to keep showing command prompt
-            print("\nEnter your command after the prompt below.")
-            print("Example formats:")
-            print("  se2448 healthcheck")
-            print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131\n")
-            
+        # Show instructions once when entering command mode
+        print("\nEnter your command after the prompt below.")
+        print("Example formats:")
+        print("  se2448 healthcheck")
+        print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131")
+        print("  se2448 passanalysis --stationop OP01 --tagop TAG01 --from 20220101 --to 20220131")
+        print("  se2448 passescost --stationop OP01 --tagop TAG01 --from 20220101 --to 20220131")
+        print("  se2448 chargesby --opid OP01 --from 20220101 --to 20220131")
+        print("  se2448 admin --addpasses --source /path/to/passes.json")
+        print("  Type 'back' to return to main menu\n")
+        
+        while True:  # Main command loop
             command = input("Enter your command: ")
-            if command.strip():
-                args = command.split()
-                if args[0] == 'se2448':
-                    self.handle_command(args[1:])
-                else:
-                    print("Commands must start with 'se2448'")
+            command = command.strip()
             
-            # Add "press any key" prompt
-            print("\nPress any key to return to main menu...")
-            # Wait for any key press
-            try:
-                # For Windows
-                import msvcrt
-                msvcrt.getch()
-            except ImportError:
-                # For Unix/Linux/MacOS
-                import sys, tty, termios
-                fd = sys.stdin.fileno()
-                old_settings = termios.tcgetattr(fd)
-                try:
-                    tty.setraw(sys.stdin.fileno())
-                    sys.stdin.read(1)
-                finally:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            if not command:
+                continue
             
-            # After key press, show menu
-            print("\n" + self.intro)
-            break  # Return to main menu
+            if command.lower() == 'back':
+                print("\n" + self.intro)
+                break
+            
+            args = command.split()
+            if args[0] == 'se2448':
+                self.handle_command(args[1:])
+            else:
+                print("Commands must start with 'se2448'")
 
     def do_2(self, arg):
         """Show help page"""
@@ -116,9 +85,9 @@ class InterTollCLI(cmd.Cmd):
             return
 
         scope = args[0]
-        format_type = parse_format_option(args)  # Get format from args
-
         try:
+            format_type = parse_format_option(args)  # Get format from args
+
             if scope == 'healthcheck':
                 result = self.api_client.healthcheck()
                 print_health_status(result, format_type)  # Pass format type
@@ -145,8 +114,10 @@ class InterTollCLI(cmd.Cmd):
             else:
                 print(f"Unknown scope: {scope}")
                 print_help()
+        except ValueError as e:
+            print(f"\n❌ Error: {str(e)}")
         except Exception as e:
-            print(f"Error: {str(e)}")
+            print(f"\n❌ Error: {str(e)}")
 
 def print_help():
     help_text = """
@@ -231,7 +202,7 @@ def parse_format_option(options):
                 
             format_type = options[i + 1].lower()
             if format_type not in ['json', 'csv']:
-                raise ValueError("Format must be either 'json' or 'csv'")
+                raise ValueError(f"Invalid format '{format_type}'. Format must be either 'json' or 'csv'")
             return format_type
         i += 1
     return 'csv'  # default format when no --format argument is provided
@@ -286,14 +257,7 @@ def cli_healthcheck():
         api_client = APIClient()
         result = api_client.healthcheck()
         if result:
-            print("\n🔍 System Health Status:")
-            print("------------------------")
-            print(f"Status: {'✅ OK' if result['status'] == 'OK' else '❌ Failed'}")
-            print(f"Database: {result['dbconnection']}")
-            print(f"Total Stations: {result['stations']}")
-            print(f"Total Tags: {result['tags']}")
-            print(f"Total Passes: {result['passes']}")
-            print("------------------------\n")
+            output_result(result)  # Use the standard output formatter instead of custom printing
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         sys.exit(1)
@@ -396,6 +360,14 @@ def handle_tollstation_passes(base_url, endpoints, options):
                 print("----------------------------\n")
             else:
                 print("No passes found for the specified criteria")
+        elif response.status_code == 204:
+            print(f"Error: Server returned status code {response.status_code}")
+            print("No data is available for this time period.")
+        elif response.status_code == 400:
+            print(f"Error: Server returned status code {response.status_code}")
+            error_data = response.json()
+            if 'message' in error_data:
+                print(f"Message from API: {error_data['message']}")
         else:
             print(f"Error: Server returned status code {response.status_code}")
             
@@ -458,6 +430,14 @@ def handle_passanalysis(base_url, endpoints, options):
                 print("----------------------\n")
             else:
                 print("No analysis data found for the specified criteria")
+        elif response.status_code == 204:
+            print(f"Error: Server returned status code {response.status_code}")
+            print("No data is available for this time period.")
+        elif response.status_code == 400:
+            print(f"Error: Server returned status code {response.status_code}")
+            error_data = response.json()
+            if 'message' in error_data:
+                print(f"Message from API: {error_data['message']}")
         else:
             print(f"Error: Server returned status code {response.status_code}")
             
@@ -531,6 +511,14 @@ def handle_passescost(base_url, endpoints, options):
                 print("-------------------\n")
             else:
                 print("No cost data found for the specified criteria")
+        elif response.status_code == 204:
+            print(f"Error: Server returned status code {response.status_code}")
+            print("No data is available for this time period.")
+        elif response.status_code == 400:
+            print(f"Error: Server returned status code {response.status_code}")
+            error_data = response.json()
+            if 'message' in error_data:
+                print(f"Message from API: {error_data['message']}")
         else:
             print(f"Error: Server returned status code {response.status_code}")
             
@@ -598,6 +586,14 @@ def handle_chargesby(base_url, endpoints, options):
                 print("--------------------------\n")
             else:
                 print("No charges found for the specified criteria")
+        elif response.status_code == 204:
+            print(f"Error: Server returned status code {response.status_code}")
+            print("No data is available for this time period.")
+        elif response.status_code == 400:
+            print(f"Error: Server returned status code {response.status_code}")
+            error_data = response.json()
+            if 'message' in error_data:
+                print(f"Message from API: {error_data['message']}")
         else:
             print(f"Error: Server returned status code {response.status_code}")
             
@@ -665,6 +661,28 @@ def handle_admin(base_url, endpoints, options):
     except Exception as e:
         print(f"❌ Error: {str(e)}")
 
+def cli_resetpasses():
+    """Direct command line resetpasses without interactive mode"""
+    try:
+        api_client = APIClient()
+        result = api_client.resetpasses()
+        if result:
+            output_result(result)  # Use standard output formatter
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        sys.exit(1)
+
+def cli_resetstations():
+    """Direct command line resetstations without interactive mode"""
+    try:
+        api_client = APIClient()
+        result = api_client.reset_stations()
+        if result:
+            output_result(result)  # Use standard output formatter
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        sys.exit(1)
+
 def main():
     args = sys.argv[1:]
     
@@ -674,25 +692,26 @@ def main():
         except KeyboardInterrupt:
             print("\nGoodbye!")
     else:
-        # For command line arguments, we'll require authentication first
         cli = InterTollCLI()
-        cli.authenticate()
-        if cli.authenticated:
-            command = args[0]
-            if command == 'healthcheck':
-                handle_healthcheck(config.API_BASE_URL, config.ENDPOINTS)
-            elif command == 'tollstationpasses':
-                handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-            elif command == 'passanalysis':
-                handle_passanalysis(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-            elif command == 'passescost':
-                handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-            elif command == 'chargesby':
-                handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-            elif command == 'admin':
-                handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-            else:
-                print_help()
+        scope = args[0]
+        if scope == 'healthcheck':
+            cli_healthcheck()
+        elif scope == 'resetpasses':
+            cli_resetpasses()
+        elif scope == 'resetstations':
+            cli_resetstations()  # Call cli_resetstations directly
+        elif scope == 'tollstationpasses':
+            handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+        elif scope == 'passanalysis':
+            handle_passanalysis(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+        elif scope == 'passescost':
+            handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+        elif scope == 'chargesby':
+            handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+        elif scope == 'admin':
+            handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+        else:
+            print_help()
 
 if __name__ == '__main__':
     main() 

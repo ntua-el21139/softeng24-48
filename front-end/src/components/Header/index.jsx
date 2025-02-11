@@ -7,15 +7,18 @@ import {
   } from "components/ui";
   import React, { useEffect, useState } from "react";
   import { useNavigate, useLocation } from "react-router-dom";
+  import { Link } from 'react-router-dom';
   
   export default function Header({ ...props }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [username, setUsername] = useState('User');
+    const [roleId, setRoleId] = useState(null);
 
     useEffect(() => {
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       setUsername(userData?.data?.username || 'User');
+      setRoleId(userData?.role_id || null);
     }, []);
   
     const handleHome = () => {
@@ -37,6 +40,31 @@ import {
       navigate(path);
     };
   
+    const isRestrictedUser = roleId === 3 || roleId === 4;
+
+    const navigationItems = [
+      {
+        title: "Import Toll Data",
+        path: "/import-toll-data",
+        restricted: true
+      },
+      {
+        title: "View Debts",
+        path: "/view-debts",
+        restricted: true
+      },
+      {
+        title: "Statistics",
+        path: "/statistics",
+        restricted: false
+      },
+      {
+        title: "Interactive Map",
+        path: "/interactive-map",
+        restricted: false
+      }
+    ];
+
     return (
       <div
         {...props}
@@ -75,49 +103,65 @@ import {
   
                   <MenubarMenu>
                     <MenubarTrigger>
-                      <Heading
-                        as="h4"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/importtolldata')} whitespace-nowrap`}
-                        onClick={() => handleNavigation('/importtolldata')}
+                      <Link
+                        to="/import-toll-data"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/import-toll-data')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
+                        onClick={(e) => {
+                          if (isRestrictedUser) {
+                            e.preventDefault();
+                          }
+                        }}
                       >
                         Import Toll Data
-                      </Heading>
+                      </Link>
                     </MenubarTrigger>
                   </MenubarMenu>
   
                   <MenubarMenu>
                     <MenubarTrigger>
-                      <Heading
-                        as="h4"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/viewdebts')} whitespace-nowrap`}
-                        onClick={() => handleNavigation('/viewdebts')}
+                      <Link
+                        to="/view-debts"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/view-debts')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
+                        onClick={(e) => {
+                          if (isRestrictedUser) {
+                            e.preventDefault();
+                          }
+                        }}
                       >
                         View Debts
-                      </Heading>
+                      </Link>
                     </MenubarTrigger>
                   </MenubarMenu>
   
                   <MenubarMenu>
                     <MenubarTrigger>
-                      <Heading
-                        as="h4"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/statistics')} whitespace-nowrap`}
-                        onClick={() => handleNavigation('/statistics')}
+                      <Link
+                        to="/statistics"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/statistics')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
+                        onClick={(e) => {
+                          if (isRestrictedUser) {
+                            e.preventDefault();
+                          }
+                        }}
                       >
                         Statistics
-                      </Heading>
+                      </Link>
                     </MenubarTrigger>
                   </MenubarMenu>
   
                   <MenubarMenu>
                     <MenubarTrigger>
-                      <Heading
-                        as="h4"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/interactivemap')} whitespace-nowrap`}
-                        onClick={() => handleNavigation('/interactivemap')}
+                      <Link
+                        to="/interactive-map"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/interactive-map')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
+                        onClick={(e) => {
+                          if (isRestrictedUser) {
+                            e.preventDefault();
+                          }
+                        }}
                       >
                         Interactive Map
-                      </Heading>
+                      </Link>
                     </MenubarTrigger>
                   </MenubarMenu>
                 </Menubar>

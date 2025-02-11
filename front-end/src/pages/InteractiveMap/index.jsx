@@ -46,6 +46,12 @@ const InteractiveMap = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filteredMarkers, setFilteredMarkers] = useState([]);
   const navigate = useNavigate();
+  const [roleId, setRoleId] = useState(null);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    setRoleId(userData.role_id);
+  }, []);
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -208,7 +214,7 @@ const InteractiveMap = () => {
       </Helmet>
 
       <div className="flex w-full flex-col items-center bg-gradient min-h-screen">
-        <Header className="self-stretch" />
+        <Header className="self-stretch" roleId={roleId} />
 
         <div className="flex justify-center items-center py-1">
           <img 
