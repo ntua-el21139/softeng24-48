@@ -55,7 +55,7 @@ exports.resetstations = async (req, res) => {
                 row.Lat,
                 row.Long,
                 row.Email,
-                row.Price1  // Using Price1 as the default price
+                row.Price2  // Using Price2 as the default price
             ]);
         }
 
