@@ -55,7 +55,8 @@ CREATE TABLE Passes (
     operator_id VARCHAR(10),  -- Removed NOT NULL to allow ON DELETE SET NULL
     charge DOUBLE(4,2) NOT NULL,
     FOREIGN KEY (toll_id) REFERENCES Tolls(toll_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (operator_id) REFERENCES Users(operator_id) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (operator_id) REFERENCES Users(operator_id) ON DELETE SET NULL ON UPDATE CASCADE,
+    UNIQUE KEY unique_pass (timestamp, toll_id, tag_id)  -- Added unique constraint
 );
 
 CREATE TABLE Monthly_Debts (
