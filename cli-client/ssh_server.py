@@ -112,37 +112,58 @@ def handle_client(client, addr):
                 # Show prompt
                 channel.send(cli.prompt)
                 
-                # Read initial command (1, 2, or 3)
+                # Read initial command
                 initial_cmd = read_command(channel)
                 
                 if not initial_cmd:
                     continue
                 
                 try:
-                    if initial_cmd.strip() in ['3', 'exit', 'quit']:
+                    initial_cmd = initial_cmd.strip()
+                    if initial_cmd.lower() in ['3', 'exit', 'quit']:
                         channel.send('Goodbye!\r\n')
                         break
                     
-                    # Handle the initial command
-                    if initial_cmd.strip() == '1':
+                    # Check if it's a direct se2448 command
+                    args = initial_cmd.split()
+                    if args and args[0].lower() == 'se2448':
+                        try:
+                            # Pass all arguments to handle_command, format will default to CSV if not specified
+                            cli.handle_command(args[1:])
+                        except Exception as e:
+                            print(f"Error executing command: {str(e)}")
+                        finally:
+                            output_catcher.flush()
+                    # Handle menu options
+                    elif initial_cmd == '1':
                         while True:
                             # Show the command prompt
                             print("\nEnter your command after the prompt below.")
                             print("Example formats:")
-                            print("  se2448 healthcheck")
-                            print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131\n")
+                            print("  se2448 healthcheck                    # defaults to CSV output")
+                            print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131")
+                            print("  se2448 tollstationpasses --station AO01 --from 20220101 --to 20220131 --format json\n")
                             
                             # Get the actual command
                             channel.send('Enter your command: ')
                             actual_cmd = read_command(channel)
                             if actual_cmd:
-                                # Parse command and use the CLI's handle_command method
-                                args = actual_cmd.split()
-                                if args[0] == 'se2448':
-                                    cli.handle_command(args[1:])
-                                else:
-                                    print("Commands must start with 'se2448'")
-                                output_catcher.flush()
+                                # Clean and parse the command
+                                actual_cmd = actual_cmd.strip()
+                                if actual_cmd:  # Make sure command isn't empty after stripping
+                                    args = actual_cmd.split()
+                                    # Case-insensitive check for 'se2448'
+                                    if args and args[0].lower() == 'se2448':
+                                        try:
+                                            # Pass all arguments to handle_command, format will default to CSV if not specified
+                                            cli.handle_command(args[1:])
+                                        except Exception as e:
+                                            print(f"Error executing command: {str(e)}")
+                                        finally:
+                                            output_catcher.flush()
+                                    else:
+                                        print("Commands must start with 'se2448'")
+                                        output_catcher.flush()
                                 
                                 print("\nPress any key to return to main menu...")
                                 channel.recv(1)
@@ -151,14 +172,18 @@ def handle_client(client, addr):
                                 for line in cli.intro.split('\n'):
                                     print(line)
                                 break
-                    else:
-                        cli.onecmd(initial_cmd)
+                    
+                    elif initial_cmd == '2':
+                        cli.do_2('')  # Show help
                         output_catcher.flush()
-                        
+                    else:
+                        print("Please select a valid option (1, 2, or 3)")
+                        output_catcher.flush()
+                    
                 except Exception as e:
                     print(f'Error: {str(e)}')
                     output_catcher.flush()
-                        
+                    
             except Exception as e:
                 print(f'Error processing command: {str(e)}')
                 output_catcher.flush()
@@ -198,7 +223,7 @@ def read_command(channel):
             line += char
             channel.send(char)
     
-    return line.strip()
+    return line
 
 def start_server(port=2222, key_file=None, host='0.0.0.0'):
     """Start the SSH server"""
