@@ -33,6 +33,7 @@
     "tailwindcss-animate": "^1.0.3"
   },
   "scripts": {
+    "generate-cert": "node scripts/generate-cert.js",
     "start": "vite",
     "build": "vite build",
     "serve": "vite preview"
