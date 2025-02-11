@@ -1,11 +1,10 @@
-import { Heading } from "components/ui";
 import React from "react";
 
-export default function DebtSummary({
-  isDebt = false,
-  charges = null,
-  ...props
-}) {
+const DebtSummary = ({ className = "", isDebt = true, charges }) => {
+  const total = charges
+    ? charges.reduce((sum, charge) => sum + Number(charge.amount), 0)
+    : 0;
+
   const operatorNames = {
     'AM': 'Aegean Motorway',
     'EG': 'Egnantia',
@@ -17,84 +16,62 @@ export default function DebtSummary({
     'OO': 'Olympia Odos'
   };
 
-  const calculateTotal = (items) => {
-    return items?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
-  };
-
-  const formatItems = (charges) => {
-    if (!charges || !Array.isArray(charges)) {
-      return [{
-        label: 'Select parameters to view debts',
-        amount: null
-      }];
+  const getEmptyMessage = () => {
+    if (charges === null) {
+      return isDebt 
+        ? "Select parameters to view debts" 
+        : "Select parameters to view credits";
     }
-    
+    // When charges is an empty array (204 response)
     if (charges.length === 0) {
-      return [{
-        label: 'You have no outstanding balance for this time period',
-        amount: null
-      }];
+      return isDebt
+        ? "You have no debts for this time period."
+        : "You have no credits for this time period.";
     }
-    
-    return charges.map(charge => ({
-      label: operatorNames[charge.creditor_operator_id] || charge.creditor_operator_id,
-      amount: Number(charge.amount).toFixed(2)
-    }));
-  };
-
-  const data = isDebt ? {
-    headerText: "You owe:",
-    items: formatItems(charges),
-    totalLabel: "Amount payable:",
-    totalAmount: calculateTotal(charges).toFixed(2)
-  } : {
-    headerText: "You are owed:",
-    items: [],
-    totalLabel: "Total receivables:",
-    totalAmount: "0.00"
+    return "No charges found";
   };
 
   return (
-    <div
-      {...props}
-      className={`${props.className} flex flex-col items-center min-h-[320px] rounded-[16px] text-white`}
-    >
-      <Heading 
-        size="headingmd" 
-        as="h2" 
-        className="mt-4 text-lg md:text-[1.75rem] font-semibold text-white"
-      >
-        {data.headerText}
-      </Heading>
-
-      <div className="flex-1 w-full px-6 md:px-8 mt-3">
-        {data.items.map((item, index) => (
-          <React.Fragment key={index}>
-            <div className={`flex ${item.amount === null ? 'justify-center' : 'justify-between'} items-center py-2`}>
-              <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
-                {item.label}
-              </Heading>
-              {item.amount !== null && (
-                <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
-                  {item.amount} €
-                </Heading>
-              )}
-            </div>
-            {index < data.items.length - 1 && item.amount !== null && (
-              <div className="w-full h-[1px] bg-white opacity-50" />
-            )}
-          </React.Fragment>
-        ))}
+    <div className={`rounded-[16px] flex flex-col ${className}`}>
+      {/* Header */}
+      <div className="text-center py-4 text-white text-2xl font-semibold">
+        {isDebt ? "You owe:" : "You are credited:"}
       </div>
 
-      <div className="w-full flex justify-between items-center px-6 md:px-8 py-4 mt-auto bg-opacity-20 bg-black rounded-b-[16px]">
-        <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
-          {data.totalLabel}
-        </Heading>
-        <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
-          {data.totalAmount} €
-        </Heading>
+      {/* Content */}
+      <div className="flex-1 px-6">
+        {charges && charges.length > 0 ? (
+          charges.map((charge, index) => (
+            <React.Fragment key={index}>
+              <div className="flex justify-between items-center py-3 text-white text-lg">
+                <span>
+                  {isDebt 
+                    ? (operatorNames[charge.creditor_operator_id] || charge.creditor_operator_id)
+                    : (operatorNames[charge.debtor_operator_id] || charge.debtor_operator_id)}
+                </span>
+                <span>{Number(charge.amount).toFixed(2)} €</span>
+              </div>
+              {index < charges.length - 1 && (
+                <div className="border-t border-white border-opacity-30" />
+              )}
+            </React.Fragment>
+          ))
+        ) : (
+          <div className="text-center py-4 text-white">
+            {getEmptyMessage()}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-auto border-t border-white border-opacity-20 bg-black bg-opacity-20 py-4 px-6 rounded-b-[16px]">
+        <div className="flex justify-between items-center text-white text-lg font-semibold">
+          <span>{isDebt ? "Amount payable:" : "Total receivables:"}</span>
+          <span>{total.toFixed(2)} €</span>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default DebtSummary;

@@ -9,19 +9,24 @@ export default function ViewDebtsColumn() {
   const [selectedMonth, setSelectedMonth] = useState(''); // Changed to empty string
   const [selectedYear, setSelectedYear] = useState(''); // Changed to empty string
   const [charges, setCharges] = useState(null);
+  const [credits, setCredits] = useState(null);
   const [error, setError] = useState('');
   const [operatorId, setOperatorId] = useState(null);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [showOperatorDropdown, setShowOperatorDropdown] = useState(false);
+  const [operatorFromStorage, setOperatorFromStorage] = useState(false);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('userData'));
-    console.log('UserData from localStorage:', userData); // Debug log
-    if (userData && userData.data && userData.data.operator_id) {  // Changed to access data.operator_id
+    console.log('UserData from localStorage:', userData);
+    if (userData && userData.data && userData.data.operator_id) {
       setOperatorId(userData.data.operator_id);
-      console.log('Set operatorId to:', userData.data.operator_id); // Debug log
+      setOperatorFromStorage(true);  // Set this to true when operator comes from storage
+      console.log('Set operatorId to:', userData.data.operator_id);
     } else {
-      console.log('No operator_id found in userData:', userData); // Debug log
+      console.log('No operator_id found in userData:', userData);
+      setOperatorFromStorage(false);  // Set this to false when no operator in storage
     }
   }, []);
 
@@ -90,7 +95,11 @@ export default function ViewDebtsColumn() {
       if (response.status === 204) {
         setCharges([]);  // Set empty array to indicate no charges
       } else if (response.data.status === 'success' && Array.isArray(response.data.data)) {
-        setCharges(response.data.data);
+        // Filter for records where the operator is the debtor
+        const debtorCharges = response.data.data.filter(
+          charge => charge.debtor_operator_id === operatorId
+        );
+        setCharges(debtorCharges);
       } else {
         setError('Invalid response format from server');
         console.error('Invalid response format:', response.data);
@@ -108,17 +117,50 @@ export default function ViewDebtsColumn() {
     }
   }, [selectedMonth, selectedYear, operatorId]);
 
+  const fetchCredits = useCallback(async () => {
+    if (!selectedYear || !selectedMonth || !operatorId) {
+      return;
+    }
+    
+    try {
+      const formattedDate = formatDateForApi();
+      const url = `http://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
+      console.log('Making credits request to:', url);
+      
+      const response = await axios.get(url);
+      console.log('Credits API Response:', response.data);
+
+      if (response.status === 204) {
+        setCredits([]);
+      } else if (response.data.status === 'success' && Array.isArray(response.data.data)) {
+        // Filter for records where the operator is the creditor
+        const creditorCharges = response.data.data.filter(
+          charge => charge.creditor_operator_id === operatorId
+        );
+        setCredits(creditorCharges);
+      } else {
+        console.error('Invalid credits response format:', response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+      if (error.response && error.response.status === 204) {
+        setCredits([]);
+      }
+    }
+  }, [selectedMonth, selectedYear, operatorId]);
+
   // Add useEffect to reset isPaid when parameters change
   useEffect(() => {
     setIsPaid(false);  // Reset to unpaid state when month or year changes
   }, [selectedMonth, selectedYear]);
 
-  // Add useEffect to trigger API call only when both month and year are selected
+  // Modify the useEffect to fetch both charges and credits
   useEffect(() => {
     if (selectedMonth && selectedYear && operatorId) {
       fetchCharges();
+      fetchCredits();
     }
-  }, [selectedMonth, selectedYear, operatorId, fetchCharges]);
+  }, [selectedMonth, selectedYear, operatorId, fetchCharges, fetchCredits]);
 
   // Add a debug log when charges change
   useEffect(() => {
@@ -177,7 +219,39 @@ export default function ViewDebtsColumn() {
     <div className="flex flex-col items-center">
       <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
         {/* Selection Controls */}
-        <div className="grid grid-cols-2 gap-4 w-[620px]">
+        <div className={`grid ${!operatorFromStorage ? 'grid-cols-3 w-[920px]' : 'grid-cols-2 w-[620px]'} gap-4`}>
+          {/* Operator Selection - Only hide when operator is from localStorage */}
+          {!operatorFromStorage && (
+            <div className="relative">
+              <button 
+                className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-full h-[48px]"
+                onClick={() => setShowOperatorDropdown(!showOperatorDropdown)}
+              >
+                <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                  {operatorId ? operatorNames[operatorId] : 'Select Toll Operator'}
+                </span>
+                <span className="text-xl ml-2">›</span>
+              </button>
+              
+              {showOperatorDropdown && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
+                  {Object.entries(operatorNames).map(([id, name]) => (
+                    <button
+                      key={id}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100"
+                      onClick={() => {
+                        setOperatorId(id);
+                        setShowOperatorDropdown(false);
+                      }}
+                    >
+                      {name} ({id})
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Month Selection */}
           <div className="relative">
             <button 
@@ -243,10 +317,16 @@ export default function ViewDebtsColumn() {
           <p className="text-red-500 text-sm mt-2">{error}</p>
         )}
 
-        {/* Debt Summary Section */}
-        <div className="mt-6">
+        {/* Debt and Credit Summary Section */}
+        <div className="mt-6 flex gap-8 justify-center">
           <DebtSummary 
-            className="bg-[#CC3843] w-[800px]" 
+            className="bg-[#29AD52] w-[450px] min-h-[320px]" 
+            isDebt={false} 
+            charges={credits}
+          />
+          
+          <DebtSummary 
+            className="bg-[#CC3843] w-[450px] min-h-[320px]" 
             isDebt={true} 
             charges={charges}
           />

@@ -116,19 +116,22 @@ class InterTollCLI(cmd.Cmd):
             return
 
         scope = args[0]
+        format_type = parse_format_option(args)  # Get format from args
 
         try:
             if scope == 'healthcheck':
                 result = self.api_client.healthcheck()
-                print_health_status(result)
+                print_health_status(result, format_type)  # Pass format type
             elif scope == 'resetpasses':
                 result = self.api_client.resetpasses()
-                print(result)
+                output_result(result, format_type)  # Pass format type
             elif scope == 'resetstations':
-                self.api_client.reset_stations()
+                result = self.api_client.reset_stations()
+                output_result(result, format_type)  # Pass format type
             elif scope == 'login':
                 username, password = parse_login_options(args[1:])
-                login(username, password)
+                result = login(username, password)
+                output_result(result, format_type)  # Pass format type
             elif scope == 'tollstationpasses':
                 handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
             elif scope == 'passanalysis':
@@ -213,30 +216,69 @@ def login(username, password):
     result = {"status": "OK", "token": "sample_token"}
     output_result(result)
 
-def output_result(data):
-    """Output the result in a formatted way"""
+def parse_format_option(options):
+    """Parse format option from command arguments"""
+    i = 0
+    while i < len(options):
+        # Check for the format flag and potential typos
+        if options[i].startswith('--') and 'format' in options[i].lower():
+            if options[i] != '--format':
+                # Suggest the correct flag if there's a typo
+                raise ValueError(f"Unknown parameter '{options[i]}'. Did you mean '--format'?")
+            
+            if i + 1 >= len(options):
+                raise ValueError("--format requires a value (json or csv)")
+                
+            format_type = options[i + 1].lower()
+            if format_type not in ['json', 'csv']:
+                raise ValueError("Format must be either 'json' or 'csv'")
+            return format_type
+        i += 1
+    return 'csv'  # default format when no --format argument is provided
+
+def output_result(data, format_type='csv'):
+    """Output the result in the specified format"""
     if not data:
         return
         
-    if isinstance(data, dict):
-        # For healthcheck and simple responses
-        if 'status' in data:
-            status_symbol = '✅' if data['status'] == 'OK' else '❌'
-            print(f"\n{status_symbol} Status: {data['status']}")
-            # Print other fields if they exist
-            for key, value in data.items():
-                if key != 'status':
-                    print(f"{key}: {value}")
-        else:
-            # Fallback to CSV format for other types of responses
-            writer = csv.DictWriter(sys.stdout, fieldnames=data.keys())
-            writer.writeheader()
-            writer.writerow(data)
-    elif isinstance(data, list):
-        if data:
-            writer = csv.DictWriter(sys.stdout, fieldnames=data[0].keys())
-            writer.writeheader()
-            writer.writerows(data)
+    print("\n" + "=" * 60)
+    print(f"⚠️  OUTPUT FORMAT: {format_type.upper()}")
+    print("=" * 60)
+    
+    if format_type == 'json':
+        # Ensure the output is valid JSON
+        try:
+            # Pretty print JSON with indentation
+            print(json.dumps(data, indent=2))
+            print("\n✅ Successfully output in JSON format")
+        except Exception as e:
+            print(f"❌ Error formatting JSON: {str(e)}")
+    else:  # csv format
+        try:
+            if isinstance(data, dict):
+                # For healthcheck and simple responses
+                if 'status' in data:
+                    status_symbol = '✅' if data['status'] == 'OK' else '❌'
+                    print(f"{status_symbol} Status: {data['status']}")
+                    # Print other fields if they exist
+                    for key, value in data.items():
+                        if key != 'status':
+                            print(f"{key}: {value}")
+                else:
+                    # Output as CSV
+                    writer = csv.DictWriter(sys.stdout, fieldnames=data.keys())
+                    writer.writeheader()
+                    writer.writerow(data)
+            elif isinstance(data, list):
+                if data:
+                    writer = csv.DictWriter(sys.stdout, fieldnames=data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(data)
+            print("\n✅ Successfully output in CSV format")
+        except Exception as e:
+            print(f"❌ Error formatting CSV: {str(e)}")
+    
+    print("=" * 60)
 
 def cli_healthcheck():
     """Direct command line healthcheck without interactive mode"""
@@ -256,26 +298,28 @@ def cli_healthcheck():
         print(f"❌ Error: {str(e)}")
         sys.exit(1)
 
-def print_health_status(response):
+def print_health_status(response, format_type='csv'):
     """Print the health status from the API response"""
     try:
         # Handle both response objects and dictionaries
         data = response.json() if hasattr(response, 'json') else response
         
-        print("\n🔍 System Health Status:")
-        print("------------------------")
-        print(f"Status: {'✅ OK' if data.get('status') == 'OK' else '❌ Failed'}")
-        if 'dbconnection' in data:
-            print(f"Database: {data['dbconnection']}")
-        if 'stations' in data:
-            print(f"Total Stations: {data['stations']}")
-        if 'tags' in data:
-            print(f"Total Tags: {data['tags']}")
-        if 'passes' in data:
-            print(f"Total Passes: {data['passes']}")
-        if 'message' in data:
-            print(f"Message: {data['message']}")
-        print("------------------------\n")
+        if format_type == 'json':
+            output_result(data, format_type)
+        else:  # csv format
+            print("\n🔍 System Health Status")
+            print("=" * 60)
+            print(f"⚠️  OUTPUT FORMAT: CSV")
+            print("=" * 60)
+            
+            # Convert health data to CSV format
+            writer = csv.DictWriter(sys.stdout, fieldnames=data.keys())
+            writer.writeheader()
+            writer.writerow(data)
+            
+            print("\n✅ Successfully output in CSV format")
+            print("=" * 60)
+            
     except Exception as e:
         print(f"Error: Could not parse health check response - {str(e)}")
 
@@ -311,29 +355,36 @@ def parse_tollstation_options(options):
         else:
             i += 1
 
-    if not all([station, date_from, date_to]):
-        raise ValueError("Station, from date, and to date are all required")
+    # Check for missing parameters and provide specific error messages
+    missing = []
+    if not station:
+        missing.append("--station")
+    if not date_from:
+        missing.append("--from")
+    if not date_to:
+        missing.append("--to")
+    
+    if missing:
+        raise ValueError(f"Missing required parameters: {', '.join(missing)}\n" +
+                        "Correct format: se2448 tollstationpasses --station <value> " +
+                        "--from YYYYMMDD --to YYYYMMDD")
 
-    # Convert date format from YYYYMMDD to YYYY-MM-DD
+    # Validate date format is YYYYMMDD
     try:
-        date_from = f"{date_from[:4]}-{date_from[4:6]}-{date_from[6:]}"
-        date_to = f"{date_to[:4]}-{date_to[4:6]}-{date_to[6:]}"
+        if not (len(date_from) == 8 and len(date_to) == 8):
+            raise ValueError("Dates must be in YYYYMMDD format")
+        return station, date_from, date_to
     except IndexError:
         raise ValueError("Dates must be in YYYYMMDD format")
-
-    return station, date_from, date_to
 
 def handle_tollstation_passes(base_url, endpoints, options):
     """Handle the tollstationpasses command"""
     try:
         station, date_from, date_to = parse_tollstation_options(options)
+        format_type = parse_format_option(options)
         
-        # Format the URL with the parameters
-        url = base_url + endpoints['tollstationpasses'].format(
-            station=station,
-            date_from=date_from,
-            date_to=date_to
-        )
+        # Format the URL with direct path parameters
+        url = f"{base_url}/api/tollStationPasses/{station}/{date_from}/{date_to}"
         
         response = requests.get(url)
         if response.status_code == 200:
@@ -341,14 +392,7 @@ def handle_tollstation_passes(base_url, endpoints, options):
             if data:
                 print("\n📊 Toll Station Passes Report")
                 print("----------------------------")
-                # Assuming the response is a list of passes
-                if isinstance(data, list):
-                    # Print as table using csv writer
-                    writer = csv.DictWriter(sys.stdout, fieldnames=data[0].keys())
-                    writer.writeheader()
-                    writer.writerows(data)
-                else:
-                    print(json.dumps(data, indent=2))
+                output_result(data, format_type)
                 print("----------------------------\n")
             else:
                 print("No passes found for the specified criteria")
@@ -387,27 +431,22 @@ def parse_passanalysis_options(options):
     if not all([stationop, tagop, date_from, date_to]):
         raise ValueError("Station operator, tag operator, from date, and to date are all required")
 
-    # Convert date format from YYYYMMDD to YYYY-MM-DD
+    # Validate date format is YYYYMMDD
     try:
-        date_from = f"{date_from[:4]}-{date_from[4:6]}-{date_from[6:]}"
-        date_to = f"{date_to[:4]}-{date_to[4:6]}-{date_to[6:]}"
+        if not (len(date_from) == 8 and len(date_to) == 8):
+            raise ValueError("Dates must be in YYYYMMDD format")
+        # Keep dates in YYYYMMDD format without adding hyphens
+        return stationop, tagop, date_from, date_to
     except IndexError:
         raise ValueError("Dates must be in YYYYMMDD format")
-
-    return stationop, tagop, date_from, date_to
 
 def handle_passanalysis(base_url, endpoints, options):
     """Handle the passanalysis command"""
     try:
         stationop, tagop, date_from, date_to = parse_passanalysis_options(options)
+        format_type = parse_format_option(options)
         
-        # Format the URL with the parameters
-        url = base_url + endpoints['passanalysis'].format(
-            stationop=stationop,
-            tagop=tagop,
-            date_from=date_from,
-            date_to=date_to
-        )
+        url = f"{base_url}/api/passAnalysis/{stationop}/{tagop}/{date_from}/{date_to}"
         
         response = requests.get(url)
         if response.status_code == 200:
@@ -415,13 +454,7 @@ def handle_passanalysis(base_url, endpoints, options):
             if data:
                 print("\n📊 Pass Analysis Report")
                 print("----------------------")
-                if isinstance(data, list):
-                    # Print as table using csv writer
-                    writer = csv.DictWriter(sys.stdout, fieldnames=data[0].keys())
-                    writer.writeheader()
-                    writer.writerows(data)
-                else:
-                    print(json.dumps(data, indent=2))
+                output_result(data, format_type)
                 print("----------------------\n")
             else:
                 print("No analysis data found for the specified criteria")
@@ -433,19 +466,60 @@ def handle_passanalysis(base_url, endpoints, options):
     except requests.exceptions.RequestException as e:
         print(f"Error connecting to server: {e}")
 
+def parse_passescost_options(options):
+    """Parse passescost command options"""
+    stationop = None
+    tagop = None
+    date_from = None
+    date_to = None
+
+    i = 0
+    while i < len(options):
+        if options[i] == '--stationop' and i + 1 < len(options):
+            stationop = options[i + 1]
+            i += 2
+        elif options[i] == '--tagop' and i + 1 < len(options):
+            tagop = options[i + 1]
+            i += 2
+        elif options[i] == '--from' and i + 1 < len(options):
+            date_from = options[i + 1]
+            i += 2
+        elif options[i] == '--to' and i + 1 < len(options):
+            date_to = options[i + 1]
+            i += 2
+        else:
+            i += 1
+
+    missing = []
+    if not stationop:
+        missing.append("--stationop")
+    if not tagop:
+        missing.append("--tagop")
+    if not date_from:
+        missing.append("--from")
+    if not date_to:
+        missing.append("--to")
+    
+    if missing:
+        raise ValueError(f"Missing required parameters: {', '.join(missing)}\n" +
+                        "Correct format: se2448 passescost --stationop <value> --tagop <value> " +
+                        "--from YYYYMMDD --to YYYYMMDD")
+
+    # Validate date format is YYYYMMDD
+    try:
+        if not (len(date_from) == 8 and len(date_to) == 8):
+            raise ValueError("Dates must be in YYYYMMDD format")
+        return stationop, tagop, date_from, date_to
+    except IndexError:
+        raise ValueError("Dates must be in YYYYMMDD format")
+
 def handle_passescost(base_url, endpoints, options):
     """Handle the passescost command"""
     try:
-        # We can reuse parse_passanalysis_options since it has the same parameters
-        stationop, tagop, date_from, date_to = parse_passanalysis_options(options)
+        stationop, tagop, date_from, date_to = parse_passescost_options(options)
+        format_type = parse_format_option(options)
         
-        # Format the URL with the parameters
-        url = base_url + endpoints['passescost'].format(
-            stationop=stationop,
-            tagop=tagop,
-            date_from=date_from,
-            date_to=date_to
-        )
+        url = f"{base_url}/api/passesCost/{stationop}/{tagop}/{date_from}/{date_to}"
         
         response = requests.get(url)
         if response.status_code == 200:
@@ -453,13 +527,7 @@ def handle_passescost(base_url, endpoints, options):
             if data:
                 print("\n💰 Passes Cost Report")
                 print("-------------------")
-                if isinstance(data, list):
-                    # Print as table using csv writer
-                    writer = csv.DictWriter(sys.stdout, fieldnames=data[0].keys())
-                    writer.writeheader()
-                    writer.writerows(data)
-                else:
-                    print(json.dumps(data, indent=2))
+                output_result(data, format_type)
                 print("-------------------\n")
             else:
                 print("No cost data found for the specified criteria")
@@ -491,29 +559,34 @@ def parse_chargesby_options(options):
         else:
             i += 1
 
-    if not all([opid, date_from, date_to]):
-        raise ValueError("Operator ID, from date, and to date are all required")
+    missing = []
+    if not opid:
+        missing.append("--opid")
+    if not date_from:
+        missing.append("--from")
+    if not date_to:
+        missing.append("--to")
+    
+    if missing:
+        raise ValueError(f"Missing required parameters: {', '.join(missing)}\n" +
+                        "Correct format: se2448 chargesby --opid <value> " +
+                        "--from YYYYMMDD --to YYYYMMDD")
 
-    # Convert date format from YYYYMMDD to YYYY-MM-DD
+    # Validate date format is YYYYMMDD
     try:
-        date_from = f"{date_from[:4]}-{date_from[4:6]}-{date_from[6:]}"
-        date_to = f"{date_to[:4]}-{date_to[4:6]}-{date_to[6:]}"
+        if not (len(date_from) == 8 and len(date_to) == 8):
+            raise ValueError("Dates must be in YYYYMMDD format")
+        return opid, date_from, date_to
     except IndexError:
         raise ValueError("Dates must be in YYYYMMDD format")
-
-    return opid, date_from, date_to
 
 def handle_chargesby(base_url, endpoints, options):
     """Handle the chargesby command"""
     try:
         opid, date_from, date_to = parse_chargesby_options(options)
+        format_type = parse_format_option(options)
         
-        # Format the URL with the parameters
-        url = base_url + endpoints['chargesby'].format(
-            opid=opid,
-            date_from=date_from,
-            date_to=date_to
-        )
+        url = f"{base_url}/api/chargesBy/{opid}/{date_from}/{date_to}"
         
         response = requests.get(url)
         if response.status_code == 200:
@@ -521,13 +594,7 @@ def handle_chargesby(base_url, endpoints, options):
             if data:
                 print("\n💳 Charges By Operator Report")
                 print("--------------------------")
-                if isinstance(data, list):
-                    # Print as table using csv writer
-                    writer = csv.DictWriter(sys.stdout, fieldnames=data[0].keys())
-                    writer.writeheader()
-                    writer.writerows(data)
-                else:
-                    print(json.dumps(data, indent=2))
+                output_result(data, format_type)
                 print("--------------------------\n")
             else:
                 print("No charges found for the specified criteria")

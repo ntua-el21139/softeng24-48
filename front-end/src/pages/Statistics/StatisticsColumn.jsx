@@ -18,15 +18,32 @@ export default function StatisticsColumn() {
   const [selectedTollName, setSelectedTollName] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateRangeText, setDateRangeText] = useState('Select Time Period');
+  const [operatorFromStorage, setOperatorFromStorage] = useState(false);
+  const [showOperatorDropdown, setShowOperatorDropdown] = useState(false);
 
-  // Get operator_id from localStorage on component mount
+  // Add operator names mapping
+  const operatorNames = {
+    'AM': 'Aegean Motorway',
+    'EG': 'Egnantia',
+    'GE': 'Gefyra',
+    'KO': 'Kentriki Odos',
+    'MO': 'Moreas',
+    'NAO': 'Nea Attiki Odos',
+    'NO': 'Nea Odos',
+    'OO': 'Olympia Odos'
+  };
+
+  // Modify the useEffect that gets operator_id
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     const operatorId = userData?.data?.operator_id;
     if (operatorId) {
       setSelectedRegion(operatorId);
+      setOperatorFromStorage(true);
       // Fetch toll names for the operator's region
       fetchTollNames(operatorId);
+    } else {
+      setOperatorFromStorage(false);
     }
   }, []);
 
@@ -177,7 +194,48 @@ export default function StatisticsColumn() {
     <div className="flex flex-col items-center">
       <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
         {/* Selection Controls */}
-        <div className="grid grid-cols-2 gap-4 w-[620px]">
+        <div className={`grid ${!operatorFromStorage ? 'grid-cols-3 w-[920px]' : 'grid-cols-2 w-[620px]'} gap-4`}>
+          {/* Operator Selection - Only show when operator is not from localStorage */}
+          {!operatorFromStorage && (
+            <div className="relative">
+              <button 
+                className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-full h-[48px]"
+                onClick={() => setShowOperatorDropdown(!showOperatorDropdown)}
+              >
+                <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                  {selectedRegion ? operatorNames[selectedRegion] : 'Select Toll Operator'}
+                </span>
+                <span className="text-xl ml-2">›</span>
+              </button>
+              
+              {showOperatorDropdown && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
+                  {Object.entries(operatorNames).map(([id, name]) => (
+                    <button
+                      key={id}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100"
+                      onClick={() => {
+                        setSelectedRegion(id);
+                        setShowOperatorDropdown(false);
+                        // Reset toll station selection
+                        setSelectedTollName('');
+                        setSelectedStation('');
+                        // Reset statistics/chart data
+                        setPassesData([]);
+                        // Reset date selection
+                        setDateRangeText('Select Time Period');
+                        // Then fetch new toll names
+                        fetchTollNames(id);
+                      }}
+                    >
+                      {name} ({id})
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Toll Names Selection */}
           <div className="relative">
             <button 
