@@ -54,11 +54,12 @@ exports.getDeptOffsetting = async (req, res) => {
                     });
                 }
 
-                // Format dates in the response
+                // Format dates and amount in the response
                 const formattedRows = rows.map(row => ({
                     ...row,
                     month_year: moment(row.month_year).format('YYYY-MM-DD HH:mm:ss'),
-                    created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss')
+                    created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+                    amount: Number(parseFloat(row.amount).toFixed(2))
                 }));
 
                 return res.json({
@@ -95,11 +96,12 @@ exports.getDeptOffsetting = async (req, res) => {
                 });
             }
 
-            // Format dates in the response
+            // Format dates and amount in the response
             const formattedRows = rows.map(row => ({
                 ...row,
                 month_year: moment(row.month_year).format('YYYY-MM-DD HH:mm:ss'),
-                created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss')
+                created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+                amount: Number(parseFloat(row.amount).toFixed(2))
             }));
 
             return res.json({

@@ -82,13 +82,14 @@ exports.getChargesBy = async (req, res) => {
                     };
                 }
                 acc[row.tag_home_id].count++;
-                acc[row.tag_home_id].totalCharge += row.charge;
+                // Convert to cents, add, then convert back to euros
+                acc[row.tag_home_id].totalCharge = (acc[row.tag_home_id].totalCharge * 100 + row.charge * 100) / 100;
                 return acc;
             }, {})
         ).map(([visitingOpID, data]) => ({
             visitingOpID,
             nPasses: data.count,
-            passesCost: data.totalCharge
+            passesCost: Number(data.totalCharge.toFixed(2))
         }));
 
         //Response

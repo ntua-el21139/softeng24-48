@@ -75,8 +75,8 @@ exports.getPassesCost = async (req, res) => {
             });
         }
 
-        // Convert to cents (integers) before summing to avoid floating-point errors
-        const totalCost = rows.reduce((sum, row) => sum + Math.round(row.charge * 100), 0) / 100;
+        // Convert to cents, add, then convert back to euros
+        const totalCost = Number((rows.reduce((sum, row) => sum + row.charge * 100, 0) / 100).toFixed(2));
         
         //Response
         res.json({
