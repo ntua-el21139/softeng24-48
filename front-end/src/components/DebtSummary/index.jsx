@@ -3,32 +3,56 @@ import React from "react";
 
 export default function DebtSummary({
   isDebt = false,
+  charges = null,
   ...props
 }) {
+  const operatorNames = {
+    'AM': 'Aegean Motorway',
+    'EG': 'Egnantia',
+    'GE': 'Gefyra',
+    'KO': 'Kentriki Odos',
+    'MO': 'Moreas',
+    'NAO': 'Nea Attiki Odos',
+    'NO': 'Nea Odos',
+    'OO': 'Olympia Odos'
+  };
+
+  const calculateTotal = (items) => {
+    return items?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+  };
+
+  const formatItems = (charges) => {
+    if (!charges || !Array.isArray(charges)) return [];
+    
+    if (charges.length === 0) {
+      return [{
+        label: 'You have no outstanding balance for this time period',
+        amount: '0.00'
+      }];
+    }
+    
+    return charges.map(charge => ({
+      label: operatorNames[charge.creditor_operator_id] || charge.creditor_operator_id,
+      amount: Number(charge.amount).toFixed(2)
+    }));
+  };
+
   const data = isDebt ? {
-    headerText: "You debt:",
-    items: [
-      { label: "Kentriki Odos", amount: "1000 €" },
-      { label: "Moreas", amount: "2000 €" },
-      { label: "Nea Odos", amount: "50 €" },
-      { label: "Olympia Odos", amount: "250 €" },
-    ],
+    headerText: "You owe:",
+    items: formatItems(charges),
     totalLabel: "Amount payable:",
-    totalAmount: "1500 €"
+    totalAmount: calculateTotal(charges).toFixed(2)
   } : {
-    headerText: "You are indebted:",
-    items: [
-      { label: "Aodos", amount: "1000 €" },
-      { label: "Gefyra", amount: "500 €" },
-    ],
+    headerText: "You are owed:",
+    items: [],
     totalLabel: "Total receivables:",
-    totalAmount: "1500 €"
+    totalAmount: "0.00"
   };
 
   return (
     <div
       {...props}
-      className={`${props.className} flex flex-col items-center w-full max-w-[320px] min-h-[280px] rounded-[16px] text-white`}
+      className={`${props.className} flex flex-col items-center min-h-[320px] rounded-[16px] text-white`}
     >
       <Heading 
         size="headingmd" 
@@ -38,15 +62,15 @@ export default function DebtSummary({
         {data.headerText}
       </Heading>
 
-      <div className="flex-1 w-full px-3 md:px-6 mt-3">
+      <div className="flex-1 w-full px-6 md:px-8 mt-3">
         {data.items.map((item, index) => (
           <React.Fragment key={index}>
-            <div className="flex justify-between items-center py-1">
+            <div className="flex justify-between items-center py-2">
               <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
                 {item.label}
               </Heading>
               <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
-                {item.amount}
+                {item.amount} €
               </Heading>
             </div>
             {index < data.items.length - 1 && (
@@ -56,12 +80,12 @@ export default function DebtSummary({
         ))}
       </div>
 
-      <div className="w-full flex justify-between items-center px-3 md:px-6 py-3 mt-auto bg-opacity-20 bg-black rounded-b-[16px]">
+      <div className="w-full flex justify-between items-center px-6 md:px-8 py-4 mt-auto bg-opacity-20 bg-black rounded-b-[16px]">
         <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
           {data.totalLabel}
         </Heading>
         <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
-          {data.totalAmount}
+          {data.totalAmount} €
         </Heading>
       </div>
     </div>
