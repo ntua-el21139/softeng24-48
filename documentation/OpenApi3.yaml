@@ -1,0 +1,229 @@
+openapi: 3.0.0
+info:
+  title: SOFTENG24-48
+  version: '1.0'
+servers:
+- url: http://localhost:9115
+  variables: {}
+paths:
+  /:
+    get:
+      tags:
+      - Misc
+      summary: http://localhost:9115
+      operationId: http://localhost:9115
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+      security: []
+  /api/chargesBy/{tollOpID}/{date_from}/{date_to}:
+    get:
+      tags:
+      - Analysis
+      summary: chargesBy
+      operationId: getChargesByOperator
+      parameters:
+        - name: tollOpID
+          in: path
+          required: true
+          description: The ID of the toll operator
+          schema:
+            type: string
+        - name: date_from
+          in: path
+          required: true
+          description: Start date in YYYYMMDD format
+          schema:
+            type: string
+            pattern: '^\d{8}$'
+            example: '20220101'
+        - name: date_to
+          in: path
+          required: true
+          description: End date in YYYYMMDD format
+          schema:
+            type: string
+            pattern: '^\d{8}$'
+            example: '20220131'
+      responses:
+        '200':
+          description: 'Successful operation'
+        '400':
+          description: 'Invalid parameters'
+        '204':
+          description: 'No data found'
+      deprecated: false
+  /api/passesCost/{tollOpID}/{tagOpID}/{date_from}/{date_to}:
+    get:
+      tags:
+      - Analysis
+      summary: passesCost
+      operationId: getPassesCostBetweenOperators
+      parameters:
+        - name: tollOpID
+          in: path
+          required: true
+          description: The ID of the toll operator
+          schema:
+            type: string
+        - name: tagOpID
+          in: path
+          required: true
+          description: The ID of the tag operator
+          schema:
+            type: string
+        - name: date_from
+          in: path
+          required: true
+          description: Start date in YYYYMMDD format
+          schema:
+            type: string
+            pattern: '^\d{8}$'
+            example: '20220101'
+        - name: date_to
+          in: path
+          required: true
+          description: End date in YYYYMMDD format
+          schema:
+            type: string
+            pattern: '^\d{8}$'
+            example: '20220131'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/passAnalysis/{stationOpID}/{tagOpID}/{date_from}/{date_to}:
+    get:
+      tags:
+      - Analysis
+      summary: passAnalysis
+      operationId: getPassesAnalysisBetweenOperators
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/admin/healthcheck:
+    get:
+      tags:
+      - Admin
+      summary: healthcheck
+      operationId: getSystemHealth
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/admin/resetstations:
+    post:
+      tags:
+      - Admin
+      summary: resetstations
+      operationId: resetTollStations
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/tollStationPasses/{tollStationID}/{date_from}/{date_to}:
+    get:
+      tags:
+      - Passes
+      summary: tollStationPasses
+      operationId: getTollStationPasses
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/admin/resetpasses:
+    post:
+      tags:
+      - Admin
+      summary: resetpasses
+      operationId: resetAllPasses
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/admin/addpasses:
+    post:
+      tags:
+      - Admin
+      summary: addpasses
+      operationId: addNewPasses
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/extra/mapSupply:
+    get:
+      tags:
+      - Extra
+      summary: mapSupply
+      operationId: mapSupply
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/extra/useCaseTwo/{OperatorID}:
+    get:
+      tags:
+      - Extra
+      summary: UseCaseTwo
+      operationId: getOperatorTolls
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/extra/fetchUser/{username}/{password}:
+    get:
+      tags:
+      - Extra
+      summary: fetchUser
+      operationId: fetchUser
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+  /api/deptOffsetting/{OperatorID}/{date}:
+    get:
+      tags:
+      - Passes
+      summary: deptOffsetting
+      operationId: deptOffsetting
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      deprecated: false
+tags:
+- name: Misc
+  description: 'Miscellaneous operations'
+- name: Admin
+  description: 'Administrative operations like resetting data and health checks'
+- name: Passes
+  description: 'Operations related to toll station passes and charges'
+- name: Analysis
+  description: 'Operations for analyzing pass data and costs'
+- name: Extra
+  description: 'Additional utility operations'
