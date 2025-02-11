@@ -82,11 +82,12 @@ exports.getDeptOffsetting = async (req, res) => {
                     month_year,
                     created_at
                 FROM Monthly_Debts
-                WHERE DATE_FORMAT(month_year, '%Y-%m') = ? AND debtor_operator_id = ?
+                WHERE DATE_FORMAT(month_year, '%Y-%m') = ? 
+                AND (debtor_operator_id = ? OR creditor_operator_id = ?)
                 ORDER BY created_at ASC
             `;
 
-            const queryParams = [mysqlDate, credential];
+            const queryParams = [mysqlDate, credential, credential];
             const [rows] = await pool.execute(sql, queryParams);
 
             if (rows.length === 0) {
