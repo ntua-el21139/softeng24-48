@@ -174,12 +174,51 @@ class CSVHandler {
     }
   }
 
+  async validateTagHomeIDs(records) {
+    const dbHandler = new DBHandler();
+    try {
+      await dbHandler.connect();
+
+      // Check each record's tagHomeID individually
+      const invalidTagHomeIDs = [];
+      for (let i = 0; i < records.length; i++) {
+        const record = records[i];
+        
+        // Query to check if this specific tagHomeID exists as an operator_id
+        const query = `
+          SELECT operator_id 
+          FROM Tolls 
+          WHERE operator_id = ?
+          LIMIT 1
+        `;
+        
+        const [result] = await dbHandler.connection.execute(query, [record.tagHomeID]);
+        
+        if (result.length === 0) {
+          invalidTagHomeIDs.push({
+            line: i + 2, // +2 because index starts at 0 and we skip header
+            tagHomeID: record.tagHomeID,
+            error: 'Tag home ID does not match any operator ID in the system'
+          });
+        }
+      }
+
+      return {
+        isValid: invalidTagHomeIDs.length === 0,
+        invalidTagHomeIDs
+      };
+    } finally {
+      await dbHandler.disconnect();
+    }
+  }
+
   async process() {
     try {
       const { type, records } = await this.readCSV();
       
-      // Only validate charges for passes type
+      // Only validate charges and tagHomeIDs for passes type
       if (type === 'passes') {
+        // Validate charges
         const chargeValidation = await this.validateCharges(records);
         if (!chargeValidation.isValid) {
           return {
@@ -189,6 +228,18 @@ class CSVHandler {
               invalid.error 
                 ? `Line ${invalid.line}: ${invalid.tollID} - ${invalid.error}`
                 : `Line ${invalid.line}: ${invalid.tollID} - Expected charge ${invalid.expectedCharge} but got ${invalid.actualCharge}`
+            )
+          };
+        }
+
+        // Validate tagHomeIDs
+        const tagHomeValidation = await this.validateTagHomeIDs(records);
+        if (!tagHomeValidation.isValid) {
+          return {
+            success: false,
+            error: 'Invalid tag home IDs detected',
+            details: tagHomeValidation.invalidTagHomeIDs.map(invalid => 
+              `Line ${invalid.line}: ${invalid.tagHomeID} - ${invalid.error}`
             )
           };
         }
