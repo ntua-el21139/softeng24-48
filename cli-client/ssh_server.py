@@ -203,11 +203,10 @@ def read_command(channel):
     
     return line
 
-def start_server(port=2222, key_file=None, host='0.0.0.0'):
+def start_server(port=2222, key_file='ssh_host_key', host='0.0.0.0', max_connections=5):
     """Start the SSH server"""
     global host_key
     active_connections = []  # Track active connections
-    max_connections = 10     # Maximum number of simultaneous connections
     
     # Ensure the key file has the correct path
     key_file = os.path.abspath(key_file) if key_file else 'ssh_host_key'
@@ -242,56 +241,35 @@ def start_server(port=2222, key_file=None, host='0.0.0.0'):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        
-        # Add explicit error handling for port binding
-        try:
-            sock.bind((host, port))
-        except socket.error as e:
-            if e.errno == 13:  # Permission denied
-                print(f"Permission denied when binding to port {port}. Try running with sudo?")
-            elif e.errno == 48:  # Address already in use
-                print(f"Port {port} is already in use. Try killing any existing processes or use a different port.")
-            else:
-                print(f"Failed to bind to port {port}: {e}")
-            sys.exit(1)
-            
-        print(f"Successfully bound to {host}:{port}")
-        
-        # Test if port is actually listening
-        sock_name = sock.getsockname()
-        print(f"Socket bound to: {sock_name[0]}:{sock_name[1]}")
-        
-    except Exception as e:
-        print(f'*** Bind failed: {str(e)}')
-        sys.exit(1)
-
-    try:
+        sock.bind((host, port))
         sock.listen(100)
-        print(f'Listening for connections on {host}:{port}...')
-        print(f'Maximum simultaneous connections: {max_connections}')
         
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
+        print('\nSSH Server started!')
+        print(f'Listening on port {port}...')
         
+        # Get network interfaces
         try:
             import netifaces
-            print("\nAvailable network interfaces:")
-            for interface in netifaces.interfaces():
-                addrs = netifaces.ifaddresses(interface)
+            interfaces = netifaces.interfaces()
+            
+            print('\nAvailable on:')
+            for iface in interfaces:
+                addrs = netifaces.ifaddresses(iface)
                 if netifaces.AF_INET in addrs:
                     for addr in addrs[netifaces.AF_INET]:
-                        ip = addr['addr']
-                        print(f"Interface {interface}: {ip}")
-                        if ip.startswith(('192.168.', '10.', '172.')):
-                            print(f"*** Use this IP for LAN connections: {ip}")
+                        print(f'- {iface}: {addr["addr"]}')
         except ImportError:
             print("Install 'netifaces' package for detailed network interface information")
         
         print('\nConnection instructions:')
-        print(f'1. From this machine: ssh -p {port} localhost -o PreferredAuthentications=none')
-        print(f'2. From local network: ssh -p {port} <LAN_IP> -o PreferredAuthentications=none')
-        print('Note: No username or password required')
+        print('Option 1 (Secure):')
+        print(f'1. First remove old host key:')
+        print(f'   ssh-keygen -R "[localhost]:2222"')
+        print(f'2. Then connect:')
+        print(f'   ssh -p {port} localhost -o PreferredAuthentications=none')
+        print('\nOption 2 (Development only):')
+        print(f'   ssh -p {port} localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=none')
+        print('\nNote: No username or password required')
         print('\nTroubleshooting:')
         print('1. Make sure your firewall allows incoming connections on port 2222')
         print('2. Try these commands to allow Python through the firewall:')
