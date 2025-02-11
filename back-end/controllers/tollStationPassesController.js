@@ -5,6 +5,19 @@ const { Parser } = require('json2csv');
 exports.getTollStationPasses = async (req, res) => {
     try {
         const { tollStationID, date_from, date_to } = req.params;
+
+        // Check for invalid query parameters
+        const allowedQueryParams = ['format'];
+        const receivedQueryParams = Object.keys(req.query);
+        const invalidParams = receivedQueryParams.filter(param => !allowedQueryParams.includes(param));
+        
+        if (invalidParams.length > 0) {
+            return res.status(400).json({
+                status: "failed",
+                message: `Invalid query parameter(s): ${invalidParams.join(', ')}`
+            });
+        }
+
         const format = req.query.format?.toLowerCase() || 'json';
 
         // Only validate format if it's provided in the query
