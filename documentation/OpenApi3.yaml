@@ -15,10 +15,13 @@ paths:
       parameters: []
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Root endpoint'
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "Welcome to the API"
       deprecated: false
-      security: []
   /api/chargesBy/{tollOpID}/{date_from}/{date_to}:
     get:
       tags:
@@ -38,6 +41,7 @@ paths:
           description: Start date in YYYYMMDD format
           schema:
             type: string
+            format: date
             pattern: '^\d{8}$'
             example: '20220101'
         - name: date_to
@@ -50,11 +54,73 @@ paths:
             example: '20220131'
       responses:
         '200':
-          description: 'Successful operation'
-        '400':
-          description: 'Invalid parameters'
+          description: 'Successfully retrieved charges'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tollOpID:
+                    type: string
+                  requestTimestamp:
+                    type: string
+                    format: date-time
+                  periodFrom:
+                    type: string
+                    format: date
+                  periodTo:
+                    type: string
+                    format: date
+                  vOpList:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        visitingOpID:
+                          type: string
+                        nPasses:
+                          type: integer
+                        passesCost:
+                          type: number
+                          format: float
         '204':
-          description: 'No data found'
+          description: 'No charges found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No charges found for given operator and time period"
+        '400':
+          description: 'Bad request - Invalid parameters'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Missing required parameters"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
       deprecated: false
   /api/passesCost/{tollOpID}/{tagOpID}/{date_from}/{date_to}:
     get:
@@ -72,7 +138,7 @@ paths:
         - name: tagOpID
           in: path
           required: true
-          description: The ID of the tag operator
+          description: The ID of the operator who issued the tag
           schema:
             type: string
         - name: date_from
@@ -81,6 +147,7 @@ paths:
           description: Start date in YYYYMMDD format
           schema:
             type: string
+            format: date
             pattern: '^\d{8}$'
             example: '20220101'
         - name: date_to
@@ -93,8 +160,68 @@ paths:
             example: '20220131'
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully retrieved passes cost'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tollOpID:
+                    type: string
+                  tagOpID:
+                    type: string
+                  requestTimestamp:
+                    type: string
+                    format: date-time
+                  periodFrom:
+                    type: string
+                    format: date
+                  periodTo:
+                    type: string
+                    format: date
+                  nPasses:
+                    type: integer
+                  passesCost:
+                    type: number
+                    format: float
+        '204':
+          description: 'No passes found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No passes found for given operators and time period"
+        '400':
+          description: 'Bad request - Invalid parameters'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Missing required parameters"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
       deprecated: false
   /api/passAnalysis/{stationOpID}/{tagOpID}/{date_from}/{date_to}:
     get:
@@ -102,11 +229,117 @@ paths:
       - Analysis
       summary: passAnalysis
       operationId: getPassesAnalysisBetweenOperators
-      parameters: []
+      parameters:
+        - name: stationOpID
+          in: path
+          required: true
+          description: The ID of the station operator
+          schema:
+            type: string
+        - name: tagOpID
+          in: path
+          required: true
+          description: The ID of the operator who issued the tag
+          schema:
+            type: string
+        - name: date_from
+          in: path
+          required: true
+          description: Start date in YYYYMMDD format
+          schema:
+            type: string
+            format: date
+            pattern: '^\d{8}$'
+            example: '20220101'
+        - name: date_to
+          in: path
+          required: true
+          description: End date in YYYYMMDD format
+          schema:
+            type: string
+            format: date
+            pattern: '^\d{8}$'
+            example: '20220131'
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully retrieved passes analysis'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stationOpID:
+                    type: string
+                  tagOpID:
+                    type: string
+                  requestTimestamp:
+                    type: string
+                    format: date-time
+                  periodFrom:
+                    type: string
+                    format: date
+                  periodTo:
+                    type: string
+                    format: date
+                  nPasses:
+                    type: integer
+                  passList:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        passIndex:
+                          type: integer
+                        passID:
+                          type: integer
+                        stationID:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                        tagID:
+                          type: string
+                        passCharge:
+                          type: number
+                          format: float
+        '204':
+          description: 'No passes found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No passes found for given operators and time period"
+        '400':
+          description: 'Bad request - Invalid parameters'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Missing required parameters"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
       deprecated: false
   /api/admin/healthcheck:
     get:
@@ -117,8 +350,40 @@ paths:
       parameters: []
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'System is healthy'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  dbconnection:
+                    type: string
+                    example: "interToll@localhost"
+                  n_stations:
+                    type: integer
+                    description: "Number of toll stations in the system"
+                  n_tags:
+                    type: integer
+                    description: "Number of unique tags in the system"
+                  n_passes:
+                    type: integer
+                    description: "Total number of passes in the system"
+        '500':
+          description: 'System health check failed'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  dbconnection:
+                    type: string
+                    example: "interToll@localhost"
       deprecated: false
   /api/admin/resetstations:
     post:
@@ -127,10 +392,36 @@ paths:
       summary: resetstations
       operationId: resetTollStations
       parameters: []
+      requestBody:
+        description: Resets toll stations using data from csv_templates/tollstations2024.csv
+        required: false
+        content:
+          text/csv:
+            schema:
+              type: object
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully reset toll stations'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  info:
+                    type: string
       deprecated: false
   /api/tollStationPasses/{tollStationID}/{date_from}/{date_to}:
     get:
@@ -138,11 +429,115 @@ paths:
       - Passes
       summary: tollStationPasses
       operationId: getTollStationPasses
-      parameters: []
+      parameters:
+        - name: tollStationID
+          in: path
+          required: true
+          description: The ID of the toll station
+          schema:
+            type: string
+        - name: date_from
+          in: path
+          required: true
+          description: Start date in YYYYMMDD format
+          schema:
+            type: string
+            format: date
+            pattern: '^\d{8}$'
+            example: '20220101'
+        - name: date_to
+          in: path
+          required: true
+          description: End date in YYYYMMDD format
+          schema:
+            type: string
+            format: date
+            pattern: '^\d{8}$'
+            example: '20220131'
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully retrieved toll station passes'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  StationID:
+                    type: string
+                  stationOperator:
+                    type: string
+                  requestTimestamp:
+                    type: string
+                    format: date-time
+                  periodFrom:
+                    type: string
+                    format: date
+                  periodTo:
+                    type: string
+                    format: date
+                  nPasses:
+                    type: integer
+                  passList:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        passIndex:
+                          type: integer
+                        passID:
+                          type: integer
+                        timestamp:
+                          type: string
+                          format: date-time
+                        tagID:
+                          type: string
+                        tagProvider:
+                          type: string
+                        passType:
+                          type: string
+                          enum: ["home", "visitor"]
+                        passCharge:
+                          type: number
+                          format: float
+        '204':
+          description: 'No passes found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No passes found for given station and time period"
+        '400':
+          description: 'Bad request - Invalid parameters'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Missing required parameters or invalid date format"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Internal server error"
       deprecated: false
   /api/admin/resetpasses:
     post:
@@ -151,10 +546,36 @@ paths:
       summary: resetpasses
       operationId: resetAllPasses
       parameters: []
+      requestBody:
+        description: Deletes all passes and resets the auto-increment counter
+        required: false
+        content:
+          text/csv:
+            schema:
+              type: object
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully reset all passes'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  info:
+                    type: string
       deprecated: false
   /api/admin/addpasses:
     post:
@@ -163,10 +584,58 @@ paths:
       summary: addpasses
       operationId: addNewPasses
       parameters: []
+      requestBody:
+        description: CSV file containing pass data with headers (timestamp, tollID, tagRef, tagHomeID, charge)
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Passes added successfully'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+        '400':
+          description: 'Bad request - Invalid file or data'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No file uploaded or invalid file type (only text/csv allowed)"
+                  info:
+                    type: string
+                    example: "Unknown toll stations: AO01, AO02"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                  details:
+                    type: string
       deprecated: false
   /api/extra/mapSupply:
     get:
@@ -177,8 +646,74 @@ paths:
       parameters: []
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully retrieved toll stations'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        operator_id:
+                          type: string
+                        operator_name:
+                          type: string
+                        toll_id:
+                          type: string
+                        toll_name:
+                          type: string
+                        PM:
+                          type: string
+                          maxLength: 2
+                        locality:
+                          type: string
+                          maxLength: 50
+                        road:
+                          type: string
+                          maxLength: 100
+                        lat:
+                          type: string
+                          maxLength: 50
+                        longt:
+                          type: string
+                          maxLength: 50
+                        email:
+                          type: string
+                          maxLength: 50
+                        price:
+                          type: number
+                          format: double
+        '204':
+          description: 'No toll stations found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No toll stations found"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Internal server error"
+                  details:
+                    type: string
       deprecated: false
   /api/extra/useCaseTwo/{OperatorID}:
     get:
@@ -186,11 +721,74 @@ paths:
       - Extra
       summary: UseCaseTwo
       operationId: getOperatorTolls
-      parameters: []
+      parameters:
+        - name: OperatorID
+          in: path
+          required: true
+          description: The ID of the operator who's stats you want to see
+          schema:
+            type: string
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully retrieved operator tolls'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        toll_id:
+                          type: string
+                        toll_name:
+                          type: string
+        '204':
+          description: 'No tolls found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No tolls found for the given operator"
+        '400':
+          description: 'Bad request - Invalid parameters'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Missing required parameters"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Internal server error"
+                  details:
+                    type: string
       deprecated: false
   /api/extra/fetchUser/{username}/{password}:
     get:
@@ -198,23 +796,162 @@ paths:
       - Extra
       summary: fetchUser
       operationId: fetchUser
-      parameters: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: The username of the user (either "admin" or "operator_id")
+          schema:
+            type: string
+        - name: password
+          in: path
+          required: true
+          description: The word password (we didnt implement login so this is just a placeholder)
+          schema:
+            type: string
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully retrieved user data'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: integer
+                      username:
+                        type: string
+                      role_id:
+                        type: string
+                      operator_id:
+                        type: string
+        '401':
+          description: 'Unauthorized - Invalid credentials'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Invalid username or password"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Internal server error"
       deprecated: false
-  /api/deptOffsetting/{OperatorID}/{date}:
+  /api/deptOffsetting/{Credential}/{date}:
     get:
       tags:
       - Passes
       summary: deptOffsetting
       operationId: deptOffsetting
-      parameters: []
+      parameters:
+        - name: Credential
+          in: path
+          required: true
+          description: The "role" of the user (either "admin" or "operator")
+          schema:
+            type: string
+        - name: date
+          in: path
+          required: true
+          description: Month in YYYYMM format
+          schema:
+            type: string
+            format: date
+            pattern: '^\d{6}$'
+            example: '202201'
       responses:
         '200':
-          description: ''
-          headers: {}
+          description: 'Successfully retrieved debt offsetting data'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        debtor_operator_id:
+                          type: string
+                        creditor_operator_id:
+                          type: string
+                        amount:
+                          type: number
+                          format: float
+                        month_year:
+                          type: string
+                          format: date-time
+                        created_at:
+                          type: string
+                          format: date-time
+        '204':
+          description: 'No debts found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "No debts found for the specified month"
+        '400':
+          description: 'Bad request - Invalid parameters'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Missing required parameters"
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  message:
+                    type: string
+                    example: "Internal server error"
+                  details:
+                    type: string
       deprecated: false
 tags:
 - name: Misc
