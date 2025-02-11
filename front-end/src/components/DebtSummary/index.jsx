@@ -22,12 +22,17 @@ export default function DebtSummary({
   };
 
   const formatItems = (charges) => {
-    if (!charges || !Array.isArray(charges)) return [];
+    if (!charges || !Array.isArray(charges)) {
+      return [{
+        label: 'Select parameters to view debts',
+        amount: null
+      }];
+    }
     
     if (charges.length === 0) {
       return [{
         label: 'You have no outstanding balance for this time period',
-        amount: '0.00'
+        amount: null
       }];
     }
     
@@ -65,15 +70,17 @@ export default function DebtSummary({
       <div className="flex-1 w-full px-6 md:px-8 mt-3">
         {data.items.map((item, index) => (
           <React.Fragment key={index}>
-            <div className="flex justify-between items-center py-2">
+            <div className={`flex ${item.amount === null ? 'justify-center' : 'justify-between'} items-center py-2`}>
               <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
                 {item.label}
               </Heading>
-              <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
-                {item.amount} €
-              </Heading>
+              {item.amount !== null && (
+                <Heading as="h4" className="text-base md:text-[1.25rem] font-semibold text-white">
+                  {item.amount} €
+                </Heading>
+              )}
             </div>
-            {index < data.items.length - 1 && (
+            {index < data.items.length - 1 && item.amount !== null && (
               <div className="w-full h-[1px] bg-white opacity-50" />
             )}
           </React.Fragment>

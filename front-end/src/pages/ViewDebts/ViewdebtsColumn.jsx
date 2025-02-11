@@ -2,14 +2,17 @@ import DebtSummary from "../../components/DebtSummary";
 import { Button, Img } from "../../components/ui";
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { jsPDF } from "jspdf";
 
 export default function ViewDebtsColumn() {
   const [isPaid, setIsPaid] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('1'); // Default to January
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState(''); // Changed to empty string
+  const [selectedYear, setSelectedYear] = useState(''); // Changed to empty string
   const [charges, setCharges] = useState(null);
   const [error, setError] = useState('');
   const [operatorId, setOperatorId] = useState(null);
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('userData'));
@@ -105,55 +108,143 @@ export default function ViewDebtsColumn() {
     }
   }, [selectedMonth, selectedYear, operatorId]);
 
+  // Add useEffect to reset isPaid when parameters change
   useEffect(() => {
-    fetchCharges();
-  }, [fetchCharges]);
+    setIsPaid(false);  // Reset to unpaid state when month or year changes
+  }, [selectedMonth, selectedYear]);
+
+  // Add useEffect to trigger API call only when both month and year are selected
+  useEffect(() => {
+    if (selectedMonth && selectedYear && operatorId) {
+      fetchCharges();
+    }
+  }, [selectedMonth, selectedYear, operatorId, fetchCharges]);
 
   // Add a debug log when charges change
   useEffect(() => {
     console.log('Charges state updated:', charges);
   }, [charges]);
 
+  // Add a function to check if we have valid charges
+  const hasValidCharges = charges && Array.isArray(charges) && charges.length > 0;
+
+  const handleDownloadInvoice = () => {
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(20);
+    doc.text('InterToll Invoice', 105, 20, { align: 'center' });
+    
+    // Add period
+    doc.setFontSize(12);
+    const period = `${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`;
+    doc.text(`Period: ${period}`, 20, 40);
+    
+    // Add operator info
+    doc.text(`Operator: ${operatorNames[operatorId] || operatorId}`, 20, 50);
+    
+    // Add table headers
+    doc.setFontSize(12);
+    doc.text('Creditor', 20, 70);
+    doc.text('Amount', 120, 70);
+    
+    // Add table content
+    let yPosition = 80;
+    charges.forEach(charge => {
+      const creditor = operatorNames[charge.creditor_operator_id] || charge.creditor_operator_id;
+      const amount = `€${Number(charge.amount).toFixed(2)}`;
+      
+      doc.text(creditor, 20, yPosition);
+      doc.text(amount, 120, yPosition);
+      yPosition += 10;
+    });
+    
+    // Add total
+    const total = charges.reduce((sum, charge) => sum + Number(charge.amount), 0);
+    doc.setFontSize(14);
+    doc.text('Total Amount:', 20, yPosition + 10);
+    doc.text(`€${total.toFixed(2)}`, 120, yPosition + 10);
+    
+    // Add timestamp
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280);
+    
+    // Download the PDF
+    doc.save(`intertoll-invoice-${operatorId}-${period.replace(' ', '-')}.pdf`);
+  };
+
   return (
-    <div className="flex flex-col items-center mt-4">
-      <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center">
-        {/* Date Selection */}
-        <div className="flex flex-col items-center gap-4 mb-6">
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <span>Month:</span>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+    <div className="flex flex-col items-center">
+      <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center px-[3.50rem] md:px-[1.25rem]">
+        {/* Selection Controls */}
+        <div className="grid grid-cols-2 gap-4 w-[620px]">
+          {/* Month Selection */}
+          <div className="relative">
+            <button 
+              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-full h-[48px]"
+              onClick={() => setShowMonthDropdown(!showMonthDropdown)}
+            >
+              <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                {selectedMonth ? months.find(m => m.value === selectedMonth)?.label : 'Select Month'}
+              </span>
+              <span className="text-xl ml-2">›</span>
+            </button>
+            
+            {showMonthDropdown && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-[300px] overflow-y-auto">
                 {months.map((month) => (
-                  <option key={month.value} value={month.value}>
+                  <button
+                    key={month.value}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-normal"
+                    onClick={() => {
+                      setSelectedMonth(month.value);
+                      setShowMonthDropdown(false);
+                    }}
+                  >
                     {month.label}
-                  </option>
+                  </button>
                 ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>Year:</span>
-              <input
-                type="number"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                min="2000"
-                max="2099"
-                className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 w-24"
-              />
-            </div>
+              </div>
+            )}
           </div>
 
-          {error && (
-            <p className="text-red-500 text-sm">{error}</p>
-          )}
+          {/* Year Selection */}
+          <div className="relative">
+            <button 
+              className="flex items-center justify-between bg-[#4A4A9A] text-white px-4 py-3 rounded-[16px] hover:bg-[#4A4A9A]/90 transition-colors w-full h-[48px]"
+              onClick={() => setShowYearDropdown(!showYearDropdown)}
+            >
+              <span className="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                {selectedYear || 'Select Year'}
+              </span>
+              <span className="text-xl ml-2">›</span>
+            </button>
+            
+            {showYearDropdown && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-[300px] overflow-y-auto">
+                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                  <button
+                    key={year}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-normal"
+                    onClick={() => {
+                      setSelectedYear(year.toString());
+                      setShowYearDropdown(false);
+                    }}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
+        {error && (
+          <p className="text-red-500 text-sm mt-2">{error}</p>
+        )}
+
         {/* Debt Summary Section */}
-        <div className="flex justify-center gap-16">
+        <div className="mt-6">
           <DebtSummary 
             className="bg-[#CC3843] w-[800px]" 
             isDebt={true} 
@@ -162,10 +253,16 @@ export default function ViewDebtsColumn() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col items-center mt-6">
+        <div className="flex items-center gap-4 mt-6">
           <Button
             shape="round"
-            className="w-48 rounded-[55px] bg-[#2D7EFF] py-2 text-white text-base font-medium shadow-lg hover:bg-[#2D7EFF]/90 focus:outline-none transition-colors mb-4"
+            disabled={!hasValidCharges}
+            onClick={handleDownloadInvoice}
+            className={`w-48 rounded-[55px] py-2 text-white text-base font-medium shadow-lg focus:outline-none transition-colors ${
+              hasValidCharges 
+                ? 'bg-[#2D7EFF] hover:bg-[#2D7EFF]/90' 
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
           >
             Download the invoice
           </Button>
@@ -173,10 +270,13 @@ export default function ViewDebtsColumn() {
           <Button
             shape="round"
             onClick={handleMarkAsPaid}
+            disabled={!hasValidCharges}
             className={`w-48 rounded-[55px] py-2 text-white text-base font-medium shadow-lg focus:outline-none transition-colors ${
-              isPaid 
-                ? 'bg-[#29AD52] hover:bg-[#29AD52]/90' 
-                : 'bg-[#2D7EFF] hover:bg-[#2D7EFF]/90'
+              !hasValidCharges 
+                ? 'bg-gray-400 cursor-not-allowed'
+                : isPaid 
+                  ? 'bg-[#29AD52] hover:bg-[#29AD52]/90' 
+                  : 'bg-[#2D7EFF] hover:bg-[#2D7EFF]/90'
             }`}
           >
             {isPaid ? 'Paid' : 'Mark as Paid'}
