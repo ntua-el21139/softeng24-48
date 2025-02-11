@@ -1,11 +1,17 @@
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import StatisticsColumn from "./StatisticsColumn";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function StatisticsPage() {
   const navigate = useNavigate();
+  const [roleId, setRoleId] = useState(null);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    setRoleId(userData.role_id);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('userData');
@@ -21,7 +27,7 @@ export default function StatisticsPage() {
 
       <div className="flex w-full flex-col items-center bg-gradient min-h-screen">
         {/* Header Section */}
-        <Header className="self-stretch" />
+        <Header className="self-stretch" roleId={roleId} />
 
         {/* Logo Section */}
         <div className="flex justify-center items-center py-2 mt-8">
