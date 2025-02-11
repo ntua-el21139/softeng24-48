@@ -1,8 +1,19 @@
 const pool = require('../utils/database');
 const moment = require('moment');
+const { Parser } = require('json2csv');
+
 exports.getPassesCost = async (req, res) => {
     try {
         const { tollOpID, tagOpID, date_from, date_to } = req.params;
+        const format = req.query.format?.toLowerCase() || 'json';
+
+        // Only validate format if it's provided in the query
+        if (req.query.format && format !== 'json' && format !== 'csv') {
+            return res.status(400).json({
+                status: "failed",
+                message: "Invalid format. Use 'json' or 'csv'"
+            });
+        }
 
         // Check if any required parameters are missing
         if (!tollOpID || !tagOpID || !date_from || !date_to) {
@@ -78,8 +89,7 @@ exports.getPassesCost = async (req, res) => {
         // Convert to cents, add, then convert back to euros
         const totalCost = Number((rows.reduce((sum, row) => sum + row.charge * 100, 0) / 100).toFixed(2));
         
-        //Response
-        res.json({
+        const responseData = {
             tollOpID: tollOpID,
             tagOpID: tagOpID,
             requestTimestamp: requestTimestamp,
@@ -87,7 +97,30 @@ exports.getPassesCost = async (req, res) => {
             periodTo: mysqlDateTo,
             nPasses: rows.length,
             passesCost: totalCost
-        });
+        };
+
+        // Return response based on format
+        if (format === 'csv') {
+            try {
+                const fields = ['tollOpID', 'tagOpID', 'requestTimestamp', 'periodFrom', 'periodTo', 'nPasses', 'passesCost'];
+                
+                const parser = new Parser({ fields });
+                const csv = parser.parse([responseData]); // Wrap in array since it's a single object
+                
+                res.setHeader('Content-Type', 'text/csv');
+                res.setHeader('Content-Disposition', `attachment; filename=passes-cost-${tollOpID}-${tagOpID}-${date_from}-${date_to}.csv`);
+                return res.send(csv);
+            } catch (err) {
+                console.error('CSV Parsing Error:', err);
+                return res.status(500).json({
+                    status: "failed",
+                    message: "Error generating CSV"
+                });
+            }
+        }
+
+        // Default JSON response
+        res.json(responseData);
         
     } catch (error) {
         console.error("Database error:", error);

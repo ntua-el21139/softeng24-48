@@ -371,7 +371,7 @@ paths:
                   n_passes:
                     type: integer
                     description: "Total number of passes in the system"
-        '500':
+        '401':
           description: 'System health check failed'
           content:
             application/json:

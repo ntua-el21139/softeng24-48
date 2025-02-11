@@ -1,9 +1,19 @@
 const pool = require('../utils/database');
 const moment = require('moment');
+const { Parser } = require('json2csv');
 
 exports.getChargesBy = async (req, res) => {
     try {
         const { tollOpID, date_from, date_to } = req.params;
+        const format = req.query.format?.toLowerCase() || 'json';
+
+        // Only validate format if it's provided in the query
+        if (req.query.format && format !== 'json' && format !== 'csv') {
+            return res.status(400).json({
+                status: "failed",
+                message: "Invalid format. Use 'json' or 'csv'"
+            });
+        }
 
         // Check if any required parameters are missing
         if (!tollOpID || !date_from || !date_to) {
@@ -92,14 +102,46 @@ exports.getChargesBy = async (req, res) => {
             passesCost: Number(data.totalCharge.toFixed(2))
         }));
 
-        //Response
-        res.json({
+        const responseData = {
             tollOpID: tollOpID,
             requestTimestamp: requestTimestamp,
             periodFrom: mysqlDateFrom,
             periodTo: mysqlDateTo,
             vOpList
-        });     
+        };
+
+        // Return response based on format
+        if (format === 'csv') {
+            try {
+                // Flatten the data structure for CSV
+                const flatData = vOpList.map(op => ({
+                    tollOpID: responseData.tollOpID,
+                    requestTimestamp: responseData.requestTimestamp,
+                    periodFrom: responseData.periodFrom,
+                    periodTo: responseData.periodTo,
+                    ...op
+                }));
+
+                const fields = ['tollOpID', 'requestTimestamp', 'periodFrom', 'periodTo', 'visitingOpID', 'nPasses', 'passesCost'];
+                
+                const parser = new Parser({ fields });
+                const csv = parser.parse(flatData);
+                
+                res.setHeader('Content-Type', 'text/csv');
+                res.setHeader('Content-Disposition', `attachment; filename=charges-by-${tollOpID}-${date_from}-${date_to}.csv`);
+                return res.send(csv);
+            } catch (err) {
+                console.error('CSV Parsing Error:', err);
+                return res.status(500).json({
+                    status: "failed",
+                    message: "Error generating CSV"
+                });
+            }
+        }
+
+        // Default JSON response
+        res.json(responseData);
+        
     } catch (error) {   
         console.error("Database error:", error);
         res.status(500).json({
