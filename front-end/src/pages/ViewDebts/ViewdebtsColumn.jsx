@@ -1,99 +1,151 @@
 import DebtSummary from "../../components/DebtSummary";
 import { Button, Img } from "../../components/ui";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 export default function ViewDebtsColumn() {
   const [isPaid, setIsPaid] = useState(false);
-  const [station, setStation] = useState('NO');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('1'); // Default to January
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [charges, setCharges] = useState(null);
   const [error, setError] = useState('');
+  const [operatorId, setOperatorId] = useState(null);
 
-  const stations = ['NO', 'NAO', 'AM', 'KO', 'EG', 'OO'];
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    console.log('UserData from localStorage:', userData); // Debug log
+    if (userData && userData.data && userData.data.operator_id) {  // Changed to access data.operator_id
+      setOperatorId(userData.data.operator_id);
+      console.log('Set operatorId to:', userData.data.operator_id); // Debug log
+    } else {
+      console.log('No operator_id found in userData:', userData); // Debug log
+    }
+  }, []);
+
+  const months = [
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' }
+  ];
+
+  const operatorNames = {
+    'AM': 'Aegean Motorway',
+    'EG': 'Egnantia',
+    'GE': 'Gefyra',
+    'KO': 'Kentriki Odos',
+    'MO': 'Moreas',
+    'NAO': 'Nea Attiki Odos',
+    'NO': 'Nea Odos',
+    'OO': 'Olympia Odos'
+  };
 
   const handleMarkAsPaid = () => {
     setIsPaid(!isPaid);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const formatDateForApi = () => {
+    // Remove any quotes and ensure month is padded with zero
+    const paddedMonth = String(selectedMonth).padStart(2, '0');
+    // Remove any quotes from the year and concatenate
+    return String(selectedYear) + paddedMonth;
   };
 
-  const fetchCharges = async () => {
-    if (!fromDate || !toDate) {
-      setError('Please select both dates');
+  const fetchCharges = useCallback(async () => {
+    if (!selectedYear || !selectedMonth || !operatorId) {
+      console.log('Missing data:', {
+        selectedYear,
+        selectedMonth,
+        operatorId
+      });
+      if (!operatorId) {
+        setError('Unable to get operator ID. Please try logging in again.');
+      } else {
+        setError('Please select both month and year');
+      }
       return;
     }
     
     setError('');
     try {
-      const formattedFromDate = formatDate(fromDate);
-      const formattedToDate = formatDate(toDate);
-      
-      const url = `http://localhost:9115/api/chargesBy/${station}/${formattedFromDate}/${formattedToDate}`;
+      const formattedDate = formatDateForApi();
+      const url = `http://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
       console.log('Making request to:', url);
       
       const response = await axios.get(url);
-      setCharges(response.data);
+      console.log('API Response:', response.data);
+
+      // Handle 204 No Content
+      if (response.status === 204) {
+        setCharges([]);  // Set empty array to indicate no charges
+      } else if (response.data.status === 'success' && Array.isArray(response.data.data)) {
+        setCharges(response.data.data);
+      } else {
+        setError('Invalid response format from server');
+        console.error('Invalid response format:', response.data);
+      }
     } catch (error) {
       console.error('Full error:', error);
-      setError(`Error fetching charges: ${error.message}`);
+      if (error.response && error.response.status === 204) {
+        setCharges([]); // Handle 204 in catch block as well
+      } else if (error.response) {
+        const errorMessage = error.response.data.message || JSON.stringify(error.response.data);
+        setError(`Error ${error.response.status}: ${errorMessage}`);
+      } else {
+        setError(`Error fetching charges: ${error.message}`);
+      }
     }
-  };
+  }, [selectedMonth, selectedYear, operatorId]);
+
+  useEffect(() => {
+    fetchCharges();
+  }, [fetchCharges]);
+
+  // Add a debug log when charges change
+  useEffect(() => {
+    console.log('Charges state updated:', charges);
+  }, [charges]);
 
   return (
     <div className="flex flex-col items-center mt-4">
       <div className="mx-auto flex w-full max-w-[85.50rem] flex-col items-center">
-        {/* Station and Date Selection */}
+        {/* Date Selection */}
         <div className="flex flex-col items-center gap-4 mb-6">
           <div className="flex gap-4">
-            <select
-              value={station}
-              onChange={(e) => setStation(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {stations.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex gap-4">
             <div className="flex items-center gap-2">
-              <span>From:</span>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
+              <span>Month:</span>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
                 className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-2">
-              <span>To:</span>
+              <span>Year:</span>
               <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="number"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                min="2000"
+                max="2099"
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 w-24"
               />
             </div>
           </div>
-
-          <Button
-            shape="round"
-            onClick={fetchCharges}
-            className="w-48 rounded-[55px] bg-[#2D7EFF] py-2 text-white text-base font-medium shadow-lg hover:bg-[#2D7EFF]/90 focus:outline-none transition-colors"
-          >
-            Search Charges
-          </Button>
 
           {error && (
             <p className="text-red-500 text-sm">{error}</p>
@@ -102,63 +154,12 @@ export default function ViewDebtsColumn() {
 
         {/* Debt Summary Section */}
         <div className="flex justify-center gap-16">
-          <DebtSummary className="bg-[#29AD52]" />
-          <DebtSummary className="bg-[#CC3843]" isDebt={true} />
+          <DebtSummary 
+            className="bg-[#CC3843] w-[800px]" 
+            isDebt={true} 
+            charges={charges}
+          />
         </div>
-
-        {/* Debug Info */}
-        <div className="mt-4 text-sm text-gray-600">
-          <p>Selected Station: {station}</p>
-          <p>From Date: {fromDate}</p>
-          <p>To Date: {toDate}</p>
-          <p>Data Received: {charges ? 'Yes' : 'No'}</p>
-          {charges && <p>Number of Operators: {charges.vOpList?.length || 0}</p>}
-        </div>
-
-        {/* Display Charges Data */}
-        {charges ? (
-          <div className="mt-6 w-full max-w-4xl">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Summary for Station: {charges.tollOpID}</h3>
-                <p className="text-sm text-gray-600">Period: {charges.periodFrom} to {charges.periodTo}</p>
-                <p className="text-sm text-gray-600">Request Time: {charges.requestTimestamp}</p>
-              </div>
-              
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="px-4 py-2 text-left">Visiting Operator</th>
-                    <th className="px-4 py-2 text-left">Number of Passes</th>
-                    <th className="px-4 py-2 text-left">Total Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {charges.vOpList && charges.vOpList.map((op, index) => (
-                    <tr key={index} className="border-b border-gray-100">
-                      <td className="px-4 py-2">{op.visitingOpID}</td>
-                      <td className="px-4 py-2">{op.nPasses}</td>
-                      <td className="px-4 py-2">€{op.passesCost.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="border-t-2 border-gray-200">
-                  <tr>
-                    <td className="px-4 py-2 font-semibold">Total</td>
-                    <td className="px-4 py-2 font-semibold">
-                      {charges.vOpList?.reduce((sum, op) => sum + op.nPasses, 0)}
-                    </td>
-                    <td className="px-4 py-2 font-semibold">
-                      €{charges.vOpList?.reduce((sum, op) => sum + op.passesCost, 0).toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <p className="mt-6 text-gray-500">No data loaded yet. Please search for charges.</p>
-        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col items-center mt-6">
