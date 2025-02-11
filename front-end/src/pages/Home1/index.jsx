@@ -1,16 +1,20 @@
 import { Helmet } from "react-helmet";
 import Home1Column from "./Home1Column";
 import { Heading, Menubar, MenubarContent, MenubarMenu, MenubarTrigger, Img } from "components/ui";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Home1Page() {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState({});
+  
+  useEffect(() => {
+    const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
+    setUserData(storedUserData);
+  }, []);
 
   const handleLogout = () => {
-    // Clear user data from localStorage
     localStorage.removeItem('userData');
-    // Navigate to login page
     navigate('/');
   };
 
@@ -29,6 +33,16 @@ export default function Home1Page() {
             alt="InterToll" 
             className="w-[300px] h-[124px] object-contain"
           />
+        </div>
+
+        {/* Logout Button */}
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Logout
+          </button>
         </div>
 
         {/* Main Content */}

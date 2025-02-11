@@ -5,18 +5,25 @@ import {
     MenubarMenu,
     MenubarTrigger
   } from "components/ui";
-  import React from "react";
+  import React, { useEffect, useState } from "react";
   import { useNavigate, useLocation } from "react-router-dom";
   
   export default function Header({ ...props }) {
     const navigate = useNavigate();
     const location = useLocation();
+    const [username, setUsername] = useState('User');
+
+    useEffect(() => {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      setUsername(userData?.data?.username || 'User');
+    }, []);
   
     const handleHome = () => {
       navigate('/home1');
     };
 
     const handleLogout = () => {
+      localStorage.removeItem('userData');
       navigate('/');
     };
 
@@ -40,7 +47,7 @@ import {
             // Welcome message for home page - updated to match navigation menu height
             <div className="flex items-center justify-between h-[70px] px-4 md:px-8">
               <Heading as="h4" className="text-base md:text-[1.50rem] font-semibold text-white">
-                Welcome Back: Attiki Odos
+                Welcome Back: {username}
               </Heading>
               <div 
                 className="text-base md:text-[1.25rem] font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors"

@@ -19,8 +19,9 @@ export default function LoginPage() {
       
       if (response.ok) {
         const userData = await response.json();
-        // Save user data to localStorage or state management solution
+        // Store all API response data
         localStorage.setItem('userData', JSON.stringify(userData));
+        console.log('Stored user data:', userData); // Debug log
         setError("");
         navigate('/home1');
       } else if (response.status === 401) {
