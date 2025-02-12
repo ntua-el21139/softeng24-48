@@ -51,23 +51,50 @@ install_node_dependencies "back-end"
 
 # Setup environment files
 echo -e "\nSetting up environment files..."
+
+# Setup backend environment
 if [ ! -f "back-end/.env" ]; then
     if [ -f "back-end/.env.example" ]; then
         cp back-end/.env.example back-end/.env
         print_status "Created back-end/.env from example"
     else
-        print_warning "back-end/.env.example not found - you'll need to create .env manually"
+        echo -e "\nCreating default back-end/.env file..."
+        cat > back-end/.env << EOL
+# Database Configuration
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASS=
+DB_NAME=interToll
+
+# Server Configuration
+PORT=9115
+NODE_ENV=development
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_key
+EOL
+        print_status "Created default back-end/.env file"
+        print_warning "Please update back-end/.env with your MySQL credentials"
     fi
 fi
 
+# Setup CLI client environment
 if [ ! -f "cli-client/.env" ]; then
     if [ -f "cli-client/.env.example" ]; then
         cp cli-client/.env.example cli-client/.env
         print_status "Created cli-client/.env from example"
     else
-        print_warning "cli-client/.env.example not found - you'll need to create .env manually"
+        echo -e "\nCreating default cli-client/.env file..."
+        cat > cli-client/.env << EOL
+# API Configuration
+BASE_URL=https://localhost:9115
+EOL
+        print_status "Created default cli-client/.env file"
     fi
 fi
 
 echo -e "\n${GREEN}Setup completed successfully!${NC}"
-echo "You can now start the application with: npm start" 
+echo -e "${YELLOW}[!]${NC} Important: Before starting the application:"
+echo "1. Update MySQL credentials in back-end/.env"
+echo "2. Make sure MySQL service is running"
+echo -e "\nThen you can start the application with: npm start" 
