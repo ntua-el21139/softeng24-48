@@ -14,6 +14,7 @@ from se2448 import (
 )
 import config
 import requests
+import re
 
 class InterTollSSHServer(paramiko.ServerInterface):
     def __init__(self):
@@ -139,12 +140,43 @@ def handle_client(client, addr):
                                     break
                                 
                                 if actual_cmd:  # Make sure command isn't empty after stripping
-                                    args = actual_cmd.split()
-                                    if args and args[0].lower() == 'se2448':
+                                    # Clean the input by removing control characters and non-printable characters
+                                    cleaned_cmd = ''.join(c for c in actual_cmd 
+                                                        if c.isprintable() or c.isspace())
+                                    # Remove ANSI escape sequences
+                                    cleaned_cmd = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', cleaned_cmd)
+                                    # Remove [C, [D sequences
+                                    cleaned_cmd = re.sub(r'\[[CD]', '', cleaned_cmd)
+                                    args = cleaned_cmd.strip().split()
+                                    
+                                    if args and args[0] == 'se2448':  # Back to exact match after cleaning
                                         try:
+                                            # Extract format before passing to handle_command
+                                            format_type = 'csv'  # default format
+                                            try:
+                                                format_index = args.index('--format')
+                                                if format_index + 1 < len(args):
+                                                    # Clean up the format value by removing any trailing control sequences
+                                                    format_value = re.sub(r'\[[0-9;]*[a-zA-Z\[\]].*$', '', 
+                                                                        args[format_index + 1])
+                                                    if format_value in ['json', 'csv']:
+                                                        format_type = format_value
+                                                    # Remove format arguments to prevent double processing
+                                                    args = args[:format_index] + args[format_index+2:]
+                                            except ValueError:
+                                                pass  # --format not found, use default
+                                            
+                                            # Pass format_type to handle_command
+                                            args.extend(['--format', format_type])
                                             cli.handle_command(args[1:])
+                                        except requests.exceptions.HTTPError as e:
+                                            try:
+                                                error_json = e.response.json()
+                                                print(f"\n❌ Error: {error_json.get('message', str(e))}")
+                                            except:
+                                                print(f"\n❌ Error: {str(e)}")
                                         except Exception as e:
-                                            print(f"Error executing command: {str(e)}")
+                                            print(f"\n❌ Error: {str(e)}")
                                         finally:
                                             output_catcher.flush()
                                     else:

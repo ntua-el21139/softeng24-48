@@ -6,6 +6,13 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import html2canvas from 'html2canvas';
 
+// Configure axios
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
+// For development only - handle self-signed certificates
+if (import.meta.env.DEV) {
+  axios.defaults.validateStatus = () => true;
+}
+
 export default function StatisticsColumn() {
   const [selectedStation, setSelectedStation] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
@@ -49,7 +56,7 @@ export default function StatisticsColumn() {
 
   const fetchTollNames = async (region) => {
     try {
-      const url = `http://localhost:9115/api/extra/useCaseTwo/${region}`;
+      const url = `/api/extra/useCaseTwo/${region}`;
       console.log('Fetching toll names for region:', url);
       
       const response = await axios.get(url);
@@ -89,7 +96,7 @@ export default function StatisticsColumn() {
       const formattedStartDate = formatDate(startDate);
       const formattedEndDate = formatDate(endDate);
       
-      const url = `http://localhost:9115/api/tollStationPasses/${selectedStation}/${formattedStartDate}/${formattedEndDate}`;
+      const url = `/api/tollStationPasses/${selectedStation}/${formattedStartDate}/${formattedEndDate}`;
       console.log('Fetching data from:', url);
       
       const response = await axios.get(url);

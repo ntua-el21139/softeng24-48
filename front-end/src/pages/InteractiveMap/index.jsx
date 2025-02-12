@@ -76,7 +76,12 @@ const InteractiveMap = () => {
     const fetchData = async () => {
       try {
         console.log('Fetching map data...');
-        const response = await fetch('http://localhost:9115/api/extra/mapSupply');
+        const response = await fetch('/api/extra/mapSupply', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
         const data = await response.json();
         
         const markerData = data.data.map(item => ({

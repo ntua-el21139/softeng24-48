@@ -11,6 +11,7 @@ import requests
 import config
 import os
 from getpass import getpass  # Add this import for hidden password input
+import urllib3
 
 class InterTollCLI(cmd.Cmd):
     intro = """
@@ -89,13 +90,13 @@ class InterTollCLI(cmd.Cmd):
             format_type = parse_format_option(args)  # Get format from args
 
             if scope == 'healthcheck':
-                result = self.api_client.healthcheck()
-                print_health_status(result, format_type)  # Pass format type
+                result = self.api_client.healthcheck(format_type)
+                output_result(result, format_type)  # Pass format type
             elif scope == 'resetpasses':
-                result = self.api_client.resetpasses()
+                result = self.api_client.resetpasses(format_type)
                 output_result(result, format_type)  # Pass format type
             elif scope == 'resetstations':
-                result = self.api_client.reset_stations()
+                result = self.api_client.reset_stations(format_type)
                 output_result(result, format_type)  # Pass format type
             elif scope == 'login':
                 username, password = parse_login_options(args[1:])
@@ -112,12 +113,26 @@ class InterTollCLI(cmd.Cmd):
             elif scope == 'admin':
                 handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
             else:
-                print(f"Unknown scope: {scope}")
-                print_help()
+                error_data = {
+                    'status': 'failed',
+                    'message': f"Unknown scope: '{scope}'",
+                    'error': 'The command is not supported. Use --help to see available commands.'
+                }
+                output_result(error_data, format_type)
         except ValueError as e:
-            print(f"\n❌ Error: {str(e)}")
+            error_data = {
+                'status': 'failed',
+                'message': str(e),
+                'error': 'Invalid parameters'
+            }
+            output_result(error_data, format_type)
         except Exception as e:
-            print(f"\n❌ Error: {str(e)}")
+            error_data = {
+                'status': 'failed',
+                'message': str(e),
+                'error': 'Unexpected error occurred'
+            }
+            output_result(error_data, format_type)
 
 def print_help():
     help_text = """
@@ -229,12 +244,10 @@ def output_result(data, format_type='csv'):
             if isinstance(data, dict):
                 # For healthcheck and simple responses
                 if 'status' in data:
-                    status_symbol = '✅' if data['status'] == 'OK' else '❌'
-                    print(f"{status_symbol} Status: {data['status']}")
-                    # Print other fields if they exist
-                    for key, value in data.items():
-                        if key != 'status':
-                            print(f"{key}: {value}")
+                    # Convert dictionary to CSV format
+                    writer = csv.DictWriter(sys.stdout, fieldnames=data.keys())
+                    writer.writeheader()
+                    writer.writerow(data)
                 else:
                     # Output as CSV
                     writer = csv.DictWriter(sys.stdout, fieldnames=data.keys())
@@ -255,9 +268,10 @@ def cli_healthcheck():
     """Direct command line healthcheck without interactive mode"""
     try:
         api_client = APIClient()
-        result = api_client.healthcheck()
+        format_type = parse_format_option(sys.argv)
+        result = api_client.healthcheck(format_type)
         if result:
-            output_result(result)  # Use the standard output formatter instead of custom printing
+            output_result(result, format_type)  # Use the standard output formatter
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         sys.exit(1)
@@ -347,34 +361,56 @@ def handle_tollstation_passes(base_url, endpoints, options):
         station, date_from, date_to = parse_tollstation_options(options)
         format_type = parse_format_option(options)
         
-        # Format the URL with direct path parameters
-        url = f"{base_url}/api/tollStationPasses/{station}/{date_from}/{date_to}"
+        # Create a session with SSL verification disabled for development
+        session = requests.Session()
+        session.verify = False
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
-        response = requests.get(url)
+        # Format the URL with direct path parameters and format query parameter
+        url = f"{base_url}/api/tollStationPasses/{station}/{date_from}/{date_to}?format={format_type}"
+        
+        response = session.get(url)
+        
         if response.status_code == 200:
-            data = response.json()
+            if format_type == 'json':
+                data = response.json()
+            else:  # csv format
+                data = response.text  # Get raw text for CSV
+            
             if data:
                 print("\n📊 Toll Station Passes Report")
                 print("----------------------------")
-                output_result(data, format_type)
-                print("----------------------------\n")
+                if format_type == 'json':
+                    output_result(data, format_type)
+                else:
+                    # For CSV, just print the raw response
+                    print(data)
+                    print("\n✅ Successfully output in CSV format")
             else:
                 print("No passes found for the specified criteria")
         elif response.status_code == 204:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: No Content")
             print("No data is available for this time period.")
-        elif response.status_code == 400:
-            print(f"Error: Server returned status code {response.status_code}")
-            error_data = response.json()
-            if 'message' in error_data:
-                print(f"Message from API: {error_data['message']}")
         else:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: {response.reason}")
+            try:
+                if format_type == 'json':
+                    error_data = response.json()
+                    output_result(error_data, format_type)
+                else:
+                    print(response.text)  # Print raw error response for CSV
+            except:
+                print("No additional error details available from API")
             
+    except requests.exceptions.SSLError:
+        print("\n❌ SSL Certificate verification failed. If this is a development environment, you may need to use a valid certificate or disable verification.")
+    except requests.exceptions.ConnectionError as e:
+        print(f"\n❌ Could not connect to the API. Is the server running and HTTPS properly configured?")
+        print(f"Error details: {str(e)}")
     except ValueError as e:
-        print(f"Error: {str(e)}")
+        print(f"\n❌ Error: {str(e)}")
     except requests.exceptions.RequestException as e:
-        print(f"Error connecting to server: {e}")
+        print(f"\n❌ API Error: {str(e)}")
 
 def parse_passanalysis_options(options):
     """Parse passanalysis command options"""
@@ -418,33 +454,56 @@ def handle_passanalysis(base_url, endpoints, options):
         stationop, tagop, date_from, date_to = parse_passanalysis_options(options)
         format_type = parse_format_option(options)
         
-        url = f"{base_url}/api/passAnalysis/{stationop}/{tagop}/{date_from}/{date_to}"
+        # Create a session with SSL verification disabled for development
+        session = requests.Session()
+        session.verify = False
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
-        response = requests.get(url)
+        # Format the URL with direct path parameters and format query parameter
+        url = f"{base_url}/api/passAnalysis/{stationop}/{tagop}/{date_from}/{date_to}?format={format_type}"
+        
+        response = session.get(url)
+        
         if response.status_code == 200:
-            data = response.json()
+            if format_type == 'json':
+                data = response.json()
+            else:  # csv format
+                data = response.text  # Get raw text for CSV
+            
             if data:
                 print("\n📊 Pass Analysis Report")
                 print("----------------------")
-                output_result(data, format_type)
-                print("----------------------\n")
+                if format_type == 'json':
+                    output_result(data, format_type)
+                else:
+                    # For CSV, just print the raw response
+                    print(data)
+                    print("\n✅ Successfully output in CSV format")
             else:
                 print("No analysis data found for the specified criteria")
         elif response.status_code == 204:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: No Content")
             print("No data is available for this time period.")
-        elif response.status_code == 400:
-            print(f"Error: Server returned status code {response.status_code}")
-            error_data = response.json()
-            if 'message' in error_data:
-                print(f"Message from API: {error_data['message']}")
         else:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: {response.reason}")
+            try:
+                if format_type == 'json':
+                    error_data = response.json()
+                    output_result(error_data, format_type)
+                else:
+                    print(response.text)  # Print raw error response for CSV
+            except:
+                print("No additional error details available from API")
             
+    except requests.exceptions.SSLError:
+        print("\n❌ SSL Certificate verification failed. If this is a development environment, you may need to use a valid certificate or disable verification.")
+    except requests.exceptions.ConnectionError as e:
+        print(f"\n❌ Could not connect to the API. Is the server running and HTTPS properly configured?")
+        print(f"Error details: {str(e)}")
     except ValueError as e:
-        print(f"Error: {str(e)}")
+        print(f"\n❌ Error: {str(e)}")
     except requests.exceptions.RequestException as e:
-        print(f"Error connecting to server: {e}")
+        print(f"\n❌ API Error: {str(e)}")
 
 def parse_passescost_options(options):
     """Parse passescost command options"""
@@ -499,33 +558,56 @@ def handle_passescost(base_url, endpoints, options):
         stationop, tagop, date_from, date_to = parse_passescost_options(options)
         format_type = parse_format_option(options)
         
-        url = f"{base_url}/api/passesCost/{stationop}/{tagop}/{date_from}/{date_to}"
+        # Create a session with SSL verification disabled for development
+        session = requests.Session()
+        session.verify = False
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
-        response = requests.get(url)
+        # Format the URL with direct path parameters and format query parameter
+        url = f"{base_url}/api/passesCost/{stationop}/{tagop}/{date_from}/{date_to}?format={format_type}"
+        
+        response = session.get(url)
+        
         if response.status_code == 200:
-            data = response.json()
+            if format_type == 'json':
+                data = response.json()
+            else:  # csv format
+                data = response.text  # Get raw text for CSV
+            
             if data:
                 print("\n💰 Passes Cost Report")
                 print("-------------------")
-                output_result(data, format_type)
-                print("-------------------\n")
+                if format_type == 'json':
+                    output_result(data, format_type)
+                else:
+                    # For CSV, just print the raw response
+                    print(data)
+                    print("\n✅ Successfully output in CSV format")
             else:
                 print("No cost data found for the specified criteria")
         elif response.status_code == 204:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: No Content")
             print("No data is available for this time period.")
-        elif response.status_code == 400:
-            print(f"Error: Server returned status code {response.status_code}")
-            error_data = response.json()
-            if 'message' in error_data:
-                print(f"Message from API: {error_data['message']}")
         else:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: {response.reason}")
+            try:
+                if format_type == 'json':
+                    error_data = response.json()
+                    output_result(error_data, format_type)
+                else:
+                    print(response.text)  # Print raw error response for CSV
+            except:
+                print("No additional error details available from API")
             
+    except requests.exceptions.SSLError:
+        print("\n❌ SSL Certificate verification failed. If this is a development environment, you may need to use a valid certificate or disable verification.")
+    except requests.exceptions.ConnectionError as e:
+        print(f"\n❌ Could not connect to the API. Is the server running and HTTPS properly configured?")
+        print(f"Error details: {str(e)}")
     except ValueError as e:
-        print(f"Error: {str(e)}")
+        print(f"\n❌ Error: {str(e)}")
     except requests.exceptions.RequestException as e:
-        print(f"Error connecting to server: {e}")
+        print(f"\n❌ API Error: {str(e)}")
 
 def parse_chargesby_options(options):
     """Parse chargesby command options"""
@@ -574,33 +656,56 @@ def handle_chargesby(base_url, endpoints, options):
         opid, date_from, date_to = parse_chargesby_options(options)
         format_type = parse_format_option(options)
         
-        url = f"{base_url}/api/chargesBy/{opid}/{date_from}/{date_to}"
+        # Create a session with SSL verification disabled for development
+        session = requests.Session()
+        session.verify = False
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
-        response = requests.get(url)
+        # Format the URL with direct path parameters and format query parameter
+        url = f"{base_url}/api/chargesBy/{opid}/{date_from}/{date_to}?format={format_type}"
+        
+        response = session.get(url)
+        
         if response.status_code == 200:
-            data = response.json()
+            if format_type == 'json':
+                data = response.json()
+            else:  # csv format
+                data = response.text  # Get raw text for CSV
+            
             if data:
                 print("\n💳 Charges By Operator Report")
                 print("--------------------------")
-                output_result(data, format_type)
-                print("--------------------------\n")
+                if format_type == 'json':
+                    output_result(data, format_type)
+                else:
+                    # For CSV, just print the raw response
+                    print(data)
+                    print("\n✅ Successfully output in CSV format")
             else:
                 print("No charges found for the specified criteria")
         elif response.status_code == 204:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: No Content")
             print("No data is available for this time period.")
-        elif response.status_code == 400:
-            print(f"Error: Server returned status code {response.status_code}")
-            error_data = response.json()
-            if 'message' in error_data:
-                print(f"Message from API: {error_data['message']}")
         else:
-            print(f"Error: Server returned status code {response.status_code}")
+            print(f"\n❌ Error {response.status_code}: {response.reason}")
+            try:
+                if format_type == 'json':
+                    error_data = response.json()
+                    output_result(error_data, format_type)
+                else:
+                    print(response.text)  # Print raw error response for CSV
+            except:
+                print("No additional error details available from API")
             
+    except requests.exceptions.SSLError:
+        print("\n❌ SSL Certificate verification failed. If this is a development environment, you may need to use a valid certificate or disable verification.")
+    except requests.exceptions.ConnectionError as e:
+        print(f"\n❌ Could not connect to the API. Is the server running and HTTPS properly configured?")
+        print(f"Error details: {str(e)}")
     except ValueError as e:
-        print(f"Error: {str(e)}")
+        print(f"\n❌ Error: {str(e)}")
     except requests.exceptions.RequestException as e:
-        print(f"Error connecting to server: {e}")
+        print(f"\n❌ API Error: {str(e)}")
 
 def parse_admin_options(options):
     """Parse admin command options"""
@@ -627,27 +732,22 @@ def handle_admin(base_url, endpoints, options):
     """Handle the admin command"""
     try:
         command, source = parse_admin_options(options)
+        format_type = parse_format_option(options)  # Get format type from options
         
         if command == 'addpasses':
             print(f"\n📤 Uploading passes from {source}")
             print("------------------------")
             
             api_client = APIClient()
-            result = api_client.addpasses(source)
+            result = api_client.addpasses(source, format_type)  # Pass format_type to addpasses
             
             if isinstance(result, dict):
                 if result.get('status') == 'OK':
                     print("\n✅ Success: Passes added successfully")
-                    if 'info' in result:
-                        print(f"Info: {result['info']}")
+                    output_result(result, format_type)  # Use standard output formatter with format type
                 else:
                     print("\n❌ Error:")
-                    if 'message' in result:
-                        print(f"Message: {result['message']}")
-                    if 'error' in result:
-                        print(f"Error: {result['error']}")
-                    if 'info' in result:
-                        print(f"Info: {result['info']}")
+                    output_result(result, format_type)  # Use standard output formatter with format type
             else:
                 print("\n❌ Error: Unexpected response format from API")
                 print(f"Response: {result}")
@@ -665,9 +765,10 @@ def cli_resetpasses():
     """Direct command line resetpasses without interactive mode"""
     try:
         api_client = APIClient()
-        result = api_client.resetpasses()
+        format_type = parse_format_option(sys.argv)
+        result = api_client.resetpasses(format_type)
         if result:
-            output_result(result)  # Use standard output formatter
+            output_result(result, format_type)  # Use standard output formatter
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         sys.exit(1)
@@ -676,9 +777,10 @@ def cli_resetstations():
     """Direct command line resetstations without interactive mode"""
     try:
         api_client = APIClient()
-        result = api_client.reset_stations()
+        format_type = parse_format_option(sys.argv)
+        result = api_client.reset_stations(format_type)
         if result:
-            output_result(result)  # Use standard output formatter
+            output_result(result, format_type)  # Use standard output formatter
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         sys.exit(1)
@@ -694,12 +796,14 @@ def main():
     else:
         cli = InterTollCLI()
         scope = args[0]
+        format_type = parse_format_option(args)  # Get format type
+        
         if scope == 'healthcheck':
             cli_healthcheck()
         elif scope == 'resetpasses':
             cli_resetpasses()
         elif scope == 'resetstations':
-            cli_resetstations()  # Call cli_resetstations directly
+            cli_resetstations()
         elif scope == 'tollstationpasses':
             handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
         elif scope == 'passanalysis':
@@ -711,7 +815,12 @@ def main():
         elif scope == 'admin':
             handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
         else:
-            print_help()
+            error_data = {
+                'status': 'failed',
+                'message': f"Unknown scope: '{scope}'",
+                'error': 'The command is not supported. Use --help to see available commands.'
+            }
+            output_result(error_data, format_type)
 
 if __name__ == '__main__':
     main() 

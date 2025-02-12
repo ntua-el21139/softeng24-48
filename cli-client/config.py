@@ -1,5 +1,5 @@
 # API Configuration
-API_BASE_URL = "http://localhost:9115"
+API_BASE_URL = "https://localhost:9115"
 
 # API Endpoints
 ENDPOINTS = {

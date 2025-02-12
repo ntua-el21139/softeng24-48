@@ -2,6 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from config import ENDPOINTS, API_BASE_URL
+import urllib3
 
 load_dotenv()
 
@@ -9,12 +10,15 @@ class APIClient:
     def __init__(self):
         self.base_url = os.getenv('API_URL', API_BASE_URL)
         self.session = requests.Session()
+        # Optionally verify SSL certificates - for development, you may need to disable verification
+        self.session.verify = False  # Only use in development
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  # Suppress warnings
         self.token = None
         
-    def healthcheck(self):
+    def healthcheck(self, format_type='csv'):
         """Call the healthcheck endpoint"""
         try:
-            url = f"{self.base_url}{ENDPOINTS['healthcheck']}"
+            url = f"{self.base_url}{ENDPOINTS['healthcheck']}?format={format_type}"
             response = self.session.get(url)
             response.raise_for_status()  # Raise an exception for bad status codes
             
@@ -32,8 +36,10 @@ class APIClient:
             else:
                 raise Exception(f"Healthcheck failed: {data.get('status', 'Unknown error')}")
             
+        except requests.exceptions.SSLError:
+            raise Exception("SSL Certificate verification failed. If this is a development environment, you may need to use a valid certificate or disable verification.")
         except requests.exceptions.ConnectionError:
-            raise Exception("Could not connect to the API. Is the server running?")
+            raise Exception("Could not connect to the API. Is the server running and HTTPS properly configured?")
         except requests.exceptions.Timeout:
             raise Exception("API request timed out")
         except requests.exceptions.RequestException as e:
@@ -43,32 +49,42 @@ class APIClient:
         except Exception as e:
             raise Exception(f"Error during healthcheck: {str(e)}")
             
-    def resetpasses(self):
+    def resetpasses(self, format_type='csv'):
         """Call the resetpasses endpoint"""
         try:
-            response = requests.post(f"{self.base_url}{ENDPOINTS['resetpasses']}")
+            url = f"{self.base_url}{ENDPOINTS['resetpasses']}?format={format_type}"
+            response = self.session.post(url)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.SSLError:
+            raise Exception("SSL Certificate verification failed. If this is a development environment, you may need to use a valid certificate or disable verification.")
         except requests.exceptions.ConnectionError:
-            raise Exception("Could not connect to the API. Is the server running?")
+            raise Exception("Could not connect to the API. Is the server running and HTTPS properly configured?")
         except requests.exceptions.Timeout:
             raise Exception("API request timed out")
         except requests.exceptions.RequestException as e:
             raise Exception(f"API Error: {str(e)}")
     
-    def reset_stations(self):
+    def reset_stations(self, format_type='csv'):
         """Call the resetstations endpoint"""
         try:
-            response = requests.post(f"{self.base_url}{ENDPOINTS['resetstations']}")
+            url = f"{self.base_url}{ENDPOINTS['resetstations']}?format={format_type}"
+            response = self.session.post(url)
+            response.raise_for_status()
             if response.status_code == 200:
-                print("Stations reset successfully")
+                return response.json()
             else:
-                print(f"Error: {response.status_code}")
-                print(response.json().get('message', 'Unknown error occurred'))
+                raise Exception(f"Error: {response.status_code} - {response.json().get('message', 'Unknown error occurred')}")
+        except requests.exceptions.SSLError:
+            raise Exception("SSL Certificate verification failed. If this is a development environment, you may need to use a valid certificate or disable verification.")
+        except requests.exceptions.ConnectionError:
+            raise Exception("Could not connect to the API. Is the server running and HTTPS properly configured?")
+        except requests.exceptions.Timeout:
+            raise Exception("API request timed out")
         except requests.exceptions.RequestException as e:
-            print(f"Error connecting to server: {e}")
+            raise Exception(f"API Error: {str(e)}")
 
-    def addpasses(self, file_path):
+    def addpasses(self, file_path, format_type='csv'):
         """Upload passes from CSV file"""
         try:
             if not os.path.exists(file_path):
@@ -83,8 +99,8 @@ class APIClient:
                     'file': (os.path.basename(file_path), file, 'text/csv')
                 }
                 
-                # Use the correct endpoint path from config
-                url = f"{self.base_url}{ENDPOINTS['admin']['addpasses']}"
+                # Use the correct endpoint path from config with format parameter
+                url = f"{self.base_url}{ENDPOINTS['admin']['addpasses']}?format={format_type}"
                 
                 response = self.session.post(url, files=files)
                 return response.json()

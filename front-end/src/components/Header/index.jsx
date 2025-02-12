@@ -18,7 +18,7 @@ import {
     useEffect(() => {
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       setUsername(userData?.data?.username || 'User');
-      setRoleId(userData?.role_id || null);
+      setRoleId(userData?.data?.role_id);
     }, []);
   
     const handleHome = () => {
@@ -30,40 +30,30 @@ import {
       navigate('/');
     };
 
-    const getTextColor = (path) => {
+    const getTextColor = (path, isDisabled) => {
+      if (isDisabled) {
+        return "text-gray-400 pointer-events-none"; // Grayed out and not clickable
+      }
       return location.pathname === path 
         ? "text-[#2D7EFF]" 
         : "text-white hover:text-gray-300 transition-colors cursor-pointer";
     };
 
-    const handleNavigation = (path) => {
-      navigate(path);
-    };
-  
-    const isRestrictedUser = roleId === 3 || roleId === 4;
-
-    const navigationItems = [
-      {
-        title: "Import Toll Data",
-        path: "/import-toll-data",
-        restricted: true
-      },
-      {
-        title: "View Debts",
-        path: "/view-debts",
-        restricted: true
-      },
-      {
-        title: "Statistics",
-        path: "/statistics",
-        restricted: false
-      },
-      {
-        title: "Interactive Map",
-        path: "/interactive-map",
-        restricted: false
+    const isButtonDisabled = (title) => {
+      if (roleId === 3) {
+        return title === "Import Toll Data" || title === "View Debts";
       }
-    ];
+      if (roleId === 4) {
+        return title === "Import Toll Data";
+      }
+      return false;
+    };
+
+    const handleNavigation = (path, title) => {
+      if (!isButtonDisabled(title)) {
+        navigate(path);
+      }
+    };
 
     return (
       <div
@@ -72,7 +62,7 @@ import {
       >
         <div className="max-w-[1440px] mx-auto">
           {location.pathname === '/home1' ? (
-            // Welcome message for home page - updated to match navigation menu height
+            // Welcome message for home page
             <div className="flex items-center justify-between h-[70px] px-4 md:px-8">
               <Heading as="h4" className="text-base md:text-[1.50rem] font-semibold text-white">
                 Welcome Back: {username}
@@ -90,7 +80,7 @@ import {
               <div className="w-full md:w-auto overflow-x-auto scrollbar-hide">
                 <Menubar className="flex flex-nowrap min-w-max gap-4 md:gap-[2.13rem] border-none">
                   <MenubarMenu>
-                    <MenubarTrigger>
+                    <MenubarTrigger className="cursor-pointer">
                       <Heading
                         as="h4"
                         className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/home1')} whitespace-nowrap`}
@@ -100,75 +90,61 @@ import {
                       </Heading>
                     </MenubarTrigger>
                   </MenubarMenu>
-  
+
                   <MenubarMenu>
-                    <MenubarTrigger>
-                      <Link
-                        to="/import-toll-data"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/import-toll-data')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
-                        onClick={(e) => {
-                          if (isRestrictedUser) {
-                            e.preventDefault();
-                          }
-                        }}
+                    <MenubarTrigger className={isButtonDisabled("Import Toll Data") ? "cursor-default" : "cursor-pointer"}>
+                      <Heading
+                        as="h4"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/importtolldata', isButtonDisabled("Import Toll Data"))} whitespace-nowrap`}
+                        onClick={() => handleNavigation('/importtolldata', "Import Toll Data")}
                       >
                         Import Toll Data
-                      </Link>
+                      </Heading>
                     </MenubarTrigger>
                   </MenubarMenu>
-  
+
                   <MenubarMenu>
-                    <MenubarTrigger>
-                      <Link
-                        to="/view-debts"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/view-debts')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
-                        onClick={(e) => {
-                          if (isRestrictedUser) {
-                            e.preventDefault();
-                          }
-                        }}
+                    <MenubarTrigger className={isButtonDisabled("View Debts") ? "cursor-default" : "cursor-pointer"}>
+                      <Heading
+                        as="h4"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/viewdebts', isButtonDisabled("View Debts"))} whitespace-nowrap`}
+                        onClick={() => handleNavigation('/viewdebts', "View Debts")}
                       >
                         View Debts
-                      </Link>
+                      </Heading>
                     </MenubarTrigger>
                   </MenubarMenu>
-  
+
                   <MenubarMenu>
-                    <MenubarTrigger>
-                      <Link
-                        to="/statistics"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/statistics')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
-                        onClick={(e) => {
-                          if (isRestrictedUser) {
-                            e.preventDefault();
-                          }
-                        }}
+                    <MenubarTrigger className="cursor-pointer">
+                      <Heading
+                        as="h4"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/statistics')} whitespace-nowrap`}
+                        onClick={() => navigate('/statistics')}
                       >
                         Statistics
-                      </Link>
+                      </Heading>
                     </MenubarTrigger>
                   </MenubarMenu>
-  
+
                   <MenubarMenu>
-                    <MenubarTrigger>
-                      <Link
-                        to="/interactive-map"
-                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/interactive-map')} whitespace-nowrap ${isRestrictedUser ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-gray-300'}`}
-                        onClick={(e) => {
-                          if (isRestrictedUser) {
-                            e.preventDefault();
-                          }
-                        }}
+                    <MenubarTrigger className="cursor-pointer">
+                      <Heading
+                        as="h4"
+                        className={`text-base md:text-[1.50rem] font-semibold ${getTextColor('/interactivemap')} whitespace-nowrap`}
+                        onClick={() => navigate('/interactivemap')}
                       >
                         Interactive Map
-                      </Link>
+                      </Heading>
                     </MenubarTrigger>
                   </MenubarMenu>
                 </Menubar>
               </div>
-  
-              <div className="text-base md:text-[1.25rem] font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors whitespace-nowrap mt-4 md:mt-0"
-                   onClick={handleLogout}>
+
+              <div 
+                className="text-base md:text-[1.25rem] font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors whitespace-nowrap mt-4 md:mt-0"
+                onClick={handleLogout}
+              >
                 Log Out
               </div>
             </div>

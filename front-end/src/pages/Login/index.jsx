@@ -14,7 +14,16 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const response = await fetch(
-        `http://localhost:9115/api/extra/fetchUser/${username}/${password}`
+        `https://localhost:9115/api/extra/fetchUser/${username}/${password}`,
+        {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/json',
+          },
+          // Ignore SSL certificate validation for development
+          rejectUnauthorized: false
+        }
       );
       
       if (response.ok) {
@@ -31,7 +40,12 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError("Connection error. Please try again.");
+      // More specific error message for SSL issues
+      if (err.message.includes('SSL') || err.message.includes('certificate')) {
+        setError("SSL Certificate error. Please check your connection settings.");
+      } else {
+        setError("Connection error. Please try again.");
+      }
     }
   };
 

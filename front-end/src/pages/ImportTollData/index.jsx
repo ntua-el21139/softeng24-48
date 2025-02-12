@@ -52,9 +52,13 @@ export default function ImportTollDataPage() {
         const formData = new FormData();
         formData.append('file', selectedFile);
 
-        const response = await fetch('http://localhost:9115/api/admin/addpasses', {
+        const response = await fetch('/api/admin/addpasses', {
           method: 'POST',
           body: formData,
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
         });
 
         if (!response.ok) {

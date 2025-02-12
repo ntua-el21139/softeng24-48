@@ -85,10 +85,18 @@ export default function ViewDebtsColumn() {
     setError('');
     try {
       const formattedDate = formatDateForApi();
-      const url = `http://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
+      const url = `https://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
       console.log('Making request to:', url);
       
-      const response = await axios.get(url);
+      const response = await axios.get(url, {
+        headers: {
+          'Accept': 'application/json',
+        },
+        validateStatus: function (status) {
+          return status >= 200 && status < 300 || status === 204;
+        }
+      });
+      
       console.log('API Response:', response.data);
 
       // Handle 204 No Content
@@ -124,10 +132,17 @@ export default function ViewDebtsColumn() {
     
     try {
       const formattedDate = formatDateForApi();
-      const url = `http://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
+      const url = `https://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
       console.log('Making credits request to:', url);
       
-      const response = await axios.get(url);
+      const response = await axios.get(url, {
+        headers: {
+          'Accept': 'application/json',
+        },
+        validateStatus: function (status) {
+          return status >= 200 && status < 300 || status === 204;
+        }
+      });
       console.log('Credits API Response:', response.data);
 
       if (response.status === 204) {

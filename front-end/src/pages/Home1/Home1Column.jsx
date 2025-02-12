@@ -1,41 +1,67 @@
 import ImportTollDataColumn from "../../components/ImportTollDataColumn";
 import { Img } from "components/ui";
 import React, { Suspense, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const data = [
   { 
     importIcon: "images/img_icloud_and_arrow_up_fill.svg", 
     importTitle: "Import Toll Data",
     iconSize: "h-24 w-24",
-    requiredRoles: [1, 2]
+    path: "/importtolldata"
   },
   { 
     importIcon: "images/img_creditcard_tria.svg", 
     importTitle: "View Debts", 
     iconSize: "h-28 w-28",
-    requiredRoles: [1, 2]
+    path: "/viewdebts"
   },
   { 
     importIcon: "images/img_group.svg", 
     importTitle: "Statistics",
     iconSize: "h-20 w-20 mt-2",
-    requiredRoles: [1, 2, 3, 4]
+    path: "/statistics"
   },
   { 
     importIcon: "images/img_group_indigo_50.svg", 
     importTitle: "Interactive Map",
     iconSize: "h-24 w-24",
-    requiredRoles: [1, 2, 3, 4]
+    path: "/interactivemap"
   }
 ];
 
 export default function Home1Column() {
+  const navigate = useNavigate();
   const [roleId, setRoleId] = useState(null);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    setRoleId(userData.role_id);
+    setRoleId(userData?.data?.role_id);
   }, []);
+
+  const isButtonDisabled = (title) => {
+    if (roleId === 3) {
+      return title === "Import Toll Data" || title === "View Debts";
+    }
+    if (roleId === 4) {
+      return title === "Import Toll Data";
+    }
+    return false;
+  };
+
+  const handleClick = (path, title) => {
+    if (!isButtonDisabled(title)) {
+      navigate(path);
+    }
+  };
+
+  const getButtonStyle = (title) => {
+    const baseStyle = "transform hover:scale-105 transition-duration-300";
+    if (isButtonDisabled(title)) {
+      return `${baseStyle} opacity-50 pointer-events-none`;
+    }
+    return baseStyle;
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -46,12 +72,8 @@ export default function Home1Column() {
               <ImportTollDataColumn 
                 {...d} 
                 key={`home-${index}`} 
-                className={`transform transition-duration-300 ${
-                  d.requiredRoles.includes(roleId) 
-                    ? 'hover:scale-105 cursor-pointer' 
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
-                disabled={!d.requiredRoles.includes(roleId)}
+                className={getButtonStyle(d.importTitle)}
+                onClick={() => handleClick(d.path, d.importTitle)}
               />
             ))}
           </Suspense>
