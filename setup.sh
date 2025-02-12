@@ -28,6 +28,16 @@ else
     exit 1
 fi
 
+# Install CLI tool
+echo -e "\nInstalling CLI tool..."
+if cd cli-client && python3 -m pip install -e .; then
+    print_status "CLI tool installed successfully"
+    cd - > /dev/null
+else
+    print_error "Failed to install CLI tool"
+    exit 1
+fi
+
 # Function to install Node.js dependencies for a specific directory
 install_node_dependencies() {
     local dir=$1
