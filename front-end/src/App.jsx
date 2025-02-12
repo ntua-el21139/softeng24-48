@@ -9,6 +9,7 @@ import ViewDebts from "./pages/ViewDebts";
 import NotFound from "./pages/NotFound";
 import "./styles/global.css"; // Import global styles
 import Header from "./components/Header";
+import { HelmetProvider } from 'react-helmet-async';
 
 // Create a wrapper component to handle the conditional header rendering
 const AppContent = () => {
@@ -37,9 +38,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <HelmetProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </HelmetProvider>
   );
 }
 

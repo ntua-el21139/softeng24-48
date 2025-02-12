@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import { Img, Button, Input } from "../../components/ui";
+import api from '../../lib/axios';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,38 +14,24 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        `https://localhost:9115/api/extra/fetchUser/${username}/${password}`,
-        {
-          method: 'GET',
-          mode: 'cors',
-          headers: {
-            'Accept': 'application/json',
-          },
-          // Ignore SSL certificate validation for development
-          rejectUnauthorized: false
-        }
-      );
+      const response = await api.get(`/extra/fetchUser/${username}/${password}`);
       
-      if (response.ok) {
-        const userData = await response.json();
-        // Store all API response data
-        localStorage.setItem('userData', JSON.stringify(userData));
-        console.log('Stored user data:', userData); // Debug log
-        setError("");
+      if (response.data) {
+        localStorage.setItem('userData', JSON.stringify(response.data));
         navigate('/home1');
-      } else if (response.status === 401) {
-        setError("Invalid username or password");
-      } else {
-        setError("An error occurred. Please try again.");
       }
-    } catch (err) {
-      console.error('Login error:', err);
-      // More specific error message for SSL issues
-      if (err.message.includes('SSL') || err.message.includes('certificate')) {
-        setError("SSL Certificate error. Please check your connection settings.");
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error.response) {
+        if (error.response.status === 401) {
+          setError('Invalid username or password');
+        } else {
+          setError('Login failed. Please try again.');
+        }
+      } else if (error.request) {
+        setError('Network error. Please check your connection.');
       } else {
-        setError("Connection error. Please try again.");
+        setError('An error occurred. Please try again.');
       }
     }
   };

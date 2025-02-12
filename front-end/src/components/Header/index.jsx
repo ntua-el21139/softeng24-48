@@ -8,6 +8,7 @@ import {
   import React, { useEffect, useState } from "react";
   import { useNavigate, useLocation } from "react-router-dom";
   import { Link } from 'react-router-dom';
+  import { Helmet } from 'react-helmet-async';
   
   export default function Header({ ...props }) {
     const navigate = useNavigate();
