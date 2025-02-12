@@ -28,16 +28,6 @@ else
     exit 1
 fi
 
-# Install CLI tool
-echo -e "\nInstalling CLI tool..."
-if cd cli-client && python3 -m pip install -e .; then
-    print_status "CLI tool installed successfully"
-    cd - > /dev/null
-else
-    print_error "Failed to install CLI tool"
-    exit 1
-fi
-
 # Function to install Node.js dependencies for a specific directory
 install_node_dependencies() {
     local dir=$1
@@ -103,8 +93,58 @@ EOL
     fi
 fi
 
+# Setup CLI tool
+echo -e "\nSetting up CLI tool..."
+cd cli-client
+
+# Make scripts executable
+chmod +x se2448.py
+chmod +x 48.sh
+print_status "Made CLI scripts executable"
+
+# Create symbolic link for global access
+if sudo ln -sf "$(pwd)/se2448.py" /usr/local/bin/se2448; then
+    print_status "Created symbolic link for CLI tool"
+else
+    print_error "Failed to create symbolic link. You might need to run with sudo"
+    exit 1
+fi
+
+# Add CLI directory to PYTHONPATH
+PYTHON_PATH_LINE="export PYTHONPATH=\"\${PYTHONPATH}:$(pwd)\""
+
+# Detect shell and update appropriate rc file
+if [ -n "$ZSH_VERSION" ]; then
+    RC_FILE="$HOME/.zshrc"
+elif [ -n "$BASH_VERSION" ]; then
+    RC_FILE="$HOME/.bashrc"
+else
+    print_warning "Could not detect shell type. Please manually add the following to your shell's rc file:"
+    echo "$PYTHON_PATH_LINE"
+    cd ..
+    exit 1
+fi
+
+# Add PYTHONPATH if not already present
+if ! grep -q "PYTHONPATH.*$(pwd)" "$RC_FILE"; then
+    echo "" >> "$RC_FILE"
+    echo "# Added by InterToll setup" >> "$RC_FILE"
+    echo "$PYTHON_PATH_LINE" >> "$RC_FILE"
+    print_status "Added CLI directory to PYTHONPATH in $RC_FILE"
+else
+    print_status "PYTHONPATH already configured"
+fi
+
+# Return to project root
+cd ..
+
+# Source the RC file
+print_warning "Please run the following command to update your current shell:"
+echo "source $RC_FILE"
+
 echo -e "\n${GREEN}Setup completed successfully!${NC}"
 echo -e "${YELLOW}[!]${NC} Important: Before starting the application:"
 echo "1. Update MySQL credentials in back-end/.env"
 echo "2. Make sure MySQL service is running"
+echo "3. Run: source $RC_FILE"
 echo -e "\nThen you can start the application with: npm start" 
