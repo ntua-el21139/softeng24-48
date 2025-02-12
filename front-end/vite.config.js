@@ -18,11 +18,12 @@ export default defineConfig({
     }
   },
   server: {
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, './.cert/key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, './.cert/cert.pem')),
-    },
+    host: true,
     port: 5173,
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, '.cert/key.pem')),
+      cert: fs.readFileSync(path.resolve(__dirname, '.cert/cert.pem')),
+    },
     proxy: {
       '/api': {
         target: 'https://localhost:9115',

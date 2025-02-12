@@ -34,7 +34,7 @@
   },
   "scripts": {
     "predev": "chmod +x generate-cert.sh && ./generate-cert.sh",
-    "dev": "vite",
+    "dev": "vite --host",
     "prestart": "node scripts/check-cert.js",
     "start": "vite",
     "build": "vite build",
