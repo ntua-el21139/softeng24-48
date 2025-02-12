@@ -88,6 +88,9 @@ if [ ! -f "cli-client/.env" ]; then
         cat > cli-client/.env << EOL
 # API Configuration
 BASE_URL=https://localhost:9115
+PYTHONWARNINGS=ignore:Unverified HTTPS request
+REQUESTS_CA_BUNDLE=
+CURL_CA_BUNDLE=
 EOL
         print_status "Created default cli-client/.env file"
     fi
