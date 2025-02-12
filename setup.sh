@@ -63,8 +63,8 @@ if [ ! -f "back-end/.env" ]; then
 # Database Configuration
 DB_HOST=127.0.0.1
 DB_USER=root
-DB_PASS=
-DB_NAME=interToll
+DB_PASSWORD=
+DB_DATABASE=interToll
 
 # Server Configuration
 PORT=9115
