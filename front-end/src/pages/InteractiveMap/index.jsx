@@ -5,6 +5,7 @@ import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
 import { IoFilterSharp } from "react-icons/io5";
 import { IoMdClose } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
+import api from "../../lib/axios";
 
 const libraries = ['places', 'marker'];
 const MAP_ID = 'AIzaSyBnva_tnIVwDQb-XVBDBvin1AmgiXcImD8';
@@ -76,13 +77,8 @@ const InteractiveMap = () => {
     const fetchData = async () => {
       try {
         console.log('Fetching map data...');
-        const response = await fetch('/api/extra/mapSupply', {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
-        const data = await response.json();
+        const response = await api.get('/extra/mapSupply');
+        const data = response.data;
         
         const markerData = data.data.map(item => ({
           position: {

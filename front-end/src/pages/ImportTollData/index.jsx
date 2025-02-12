@@ -3,6 +3,7 @@ import Header from "../../components/Header";
 import { Button, Heading, Img } from "../../components/ui";
 import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../lib/axios";
 
 export default function ImportTollDataPage() {
   const navigate = useNavigate();
@@ -52,27 +53,19 @@ export default function ImportTollDataPage() {
         const formData = new FormData();
         formData.append('file', selectedFile);
 
-        const response = await fetch('/api/admin/addpasses', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include',
+        const response = await api.post('/admin/addpasses', formData, {
           headers: {
-            'Accept': 'application/json',
+            'Content-Type': 'multipart/form-data',
           }
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Upload response:', data);
+        console.log('Upload response:', response.data);
         setUploadSuccess(true);
         setSelectedFile(null);
       } catch (error) {
         console.error('Error uploading file:', error);
-        alert(`Error uploading file: ${error.message}`);
+        const errorMessage = error.response?.data?.message || error.message;
+        alert(`Error uploading file: ${errorMessage}`);
       }
     } else {
       alert('Please select a file first');

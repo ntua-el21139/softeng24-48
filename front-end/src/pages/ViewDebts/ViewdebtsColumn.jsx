@@ -1,7 +1,7 @@
 import DebtSummary from "../../components/DebtSummary";
 import { Button, Img } from "../../components/ui";
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import api from "../../lib/axios";
 import { jsPDF } from "jspdf";
 
 export default function ViewDebtsColumn() {
@@ -85,13 +85,7 @@ export default function ViewDebtsColumn() {
     setError('');
     try {
       const formattedDate = formatDateForApi();
-      const url = `https://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
-      console.log('Making request to:', url);
-      
-      const response = await axios.get(url, {
-        headers: {
-          'Accept': 'application/json',
-        },
+      const response = await api.get(`/deptOffsetting/${operatorId}/${formattedDate}`, {
         validateStatus: function (status) {
           return status >= 200 && status < 300 || status === 204;
         }
@@ -132,13 +126,7 @@ export default function ViewDebtsColumn() {
     
     try {
       const formattedDate = formatDateForApi();
-      const url = `https://localhost:9115/api/deptOffsetting/${operatorId}/${formattedDate}`;
-      console.log('Making credits request to:', url);
-      
-      const response = await axios.get(url, {
-        headers: {
-          'Accept': 'application/json',
-        },
+      const response = await api.get(`/deptOffsetting/${operatorId}/${formattedDate}`, {
         validateStatus: function (status) {
           return status >= 200 && status < 300 || status === 204;
         }
