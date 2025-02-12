@@ -7,7 +7,7 @@ const DebtSummary = ({ className = "", isDebt = true, charges }) => {
 
   const operatorNames = {
     'AM': 'Aegean Motorway',
-    'EG': 'Egnantia',
+    'EG': 'Egnatia',
     'GE': 'Gefyra',
     'KO': 'Kentriki Odos',
     'MO': 'Moreas',

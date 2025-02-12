@@ -47,7 +47,7 @@ export default function ViewDebtsColumn() {
 
   const operatorNames = {
     'AM': 'Aegean Motorway',
-    'EG': 'Egnantia',
+    'EG': 'Egnatia',
     'GE': 'Gefyra',
     'KO': 'Kentriki Odos',
     'MO': 'Moreas',
