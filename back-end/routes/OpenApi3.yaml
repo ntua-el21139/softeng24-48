@@ -3,7 +3,8 @@ info:
   title: SOFTENG24-48
   version: '1.0'
 servers:
-- url: http://localhost:9115
+- url: https://localhost:9115
+  description: HTTPS Server
   variables: {}
 paths:
   /:
@@ -52,6 +53,14 @@ paths:
             type: string
             pattern: '^\d{8}$'
             example: '20220131'
+        - name: format
+          in: query
+          required: false
+          description: Response format (defaults to json if not specified)
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
       responses:
         '200':
           description: 'Successfully retrieved charges'
@@ -83,6 +92,10 @@ paths:
                         passesCost:
                           type: number
                           format: float
+            text/csv:
+              schema:
+                type: string
+                description: CSV formatted data with headers (tollOpID, requestTimestamp, periodFrom, periodTo, visitingOpID, nPasses, passesCost)
         '204':
           description: 'No charges found'
           content:
@@ -158,6 +171,14 @@ paths:
             type: string
             pattern: '^\d{8}$'
             example: '20220131'
+        - name: format
+          in: query
+          required: false
+          description: Response format (defaults to json if not specified)
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
       responses:
         '200':
           description: 'Successfully retrieved passes cost'
@@ -184,6 +205,10 @@ paths:
                   passesCost:
                     type: number
                     format: float
+            text/csv:
+              schema:
+                type: string
+                description: CSV formatted data with headers (tollOpID, tagOpID, requestTimestamp, periodFrom, periodTo, nPasses, passesCost)
         '204':
           description: 'No passes found'
           content:
@@ -257,9 +282,16 @@ paths:
           description: End date in YYYYMMDD format
           schema:
             type: string
-            format: date
             pattern: '^\d{8}$'
             example: '20220131'
+        - name: format
+          in: query
+          required: false
+          description: Response format (defaults to json if not specified)
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
       responses:
         '200':
           description: 'Successfully retrieved passes analysis'
@@ -302,6 +334,10 @@ paths:
                         passCharge:
                           type: number
                           format: float
+            text/csv:
+              schema:
+                type: string
+                description: CSV formatted data with headers (stationOpID, tagOpID, requestTimestamp, periodFrom, periodTo, nPasses, passIndex, passID, stationID, timestamp, tagID, passCharge)
         '204':
           description: 'No passes found'
           content:
@@ -454,6 +490,14 @@ paths:
             format: date
             pattern: '^\d{8}$'
             example: '20220131'
+        - name: format
+          in: query
+          required: false
+          description: Response format (defaults to json if not specified)
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
       responses:
         '200':
           description: 'Successfully retrieved toll station passes'
@@ -499,6 +543,10 @@ paths:
                         passCharge:
                           type: number
                           format: float
+            text/csv:
+              schema:
+                type: string
+                description: CSV formatted data with headers (StationID, stationOperator, requestTimestamp, periodFrom, periodTo, nPasses, passIndex, passID, timestamp, tagID, tagProvider, passType, passCharge)
         '204':
           description: 'No passes found'
           content:

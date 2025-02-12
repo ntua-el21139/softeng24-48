@@ -6,6 +6,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const os = require('os');
 
 const app = express();
 const port = process.env.PORT || 9115;
@@ -19,7 +20,9 @@ const sslOptions = {
 // Start SSH server
 const startSSHServer = () => {
   const sshServerPath = path.join(__dirname, '..', 'cli-client', 'ssh_server.py');
-  const pythonProcess = spawn('python3', [sshServerPath]);
+  // Use python3 for macOS/Linux, python for Windows
+  const pythonCommand = os.platform() === 'win32' ? 'python' : 'python3';
+  const pythonProcess = spawn(pythonCommand, [sshServerPath]);
 
   pythonProcess.stdout.on('data', (data) => {
     console.log(`SSH Server: ${data}`);
