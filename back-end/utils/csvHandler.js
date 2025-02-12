@@ -105,12 +105,31 @@ class CSVHandler {
     const seen = new Set();
     this.duplicates.clear();
     
-    records.forEach(record => {
-      const key = JSON.stringify(record);
-      if (seen.has(key)) {
-        this.duplicates.add(key);
+    records.forEach((record, index) => {
+      // For passes, check timestamp and tagRef combination
+      if (record.timestamp && record.tagRef) {
+        const key = `${record.timestamp}_${record.tagRef}`;
+        if (seen.has(key)) {
+          this.duplicates.add({
+            line: index + 2,  // +2 because index starts at 0 and we skip header
+            timestamp: record.timestamp,
+            tagRef: record.tagRef,
+            error: 'Duplicate pass entry found with same timestamp and tag reference'
+          });
+        }
+        seen.add(key);
+      } else {
+        // For other types of records, check the entire record
+        const key = JSON.stringify(record);
+        if (seen.has(key)) {
+          this.duplicates.add({
+            line: index + 2,
+            record: record,
+            error: 'Duplicate record found'
+          });
+        }
+        seen.add(key);
       }
-      seen.add(key);
     });
 
     return this.duplicates.size === 0;
@@ -216,6 +235,18 @@ class CSVHandler {
     try {
       const { type, records } = await this.readCSV();
       
+      // Check for duplicates first
+      const hasDuplicates = !this.checkDuplicates(records);
+      if (hasDuplicates) {
+        return {
+          success: false,
+          error: 'Duplicate entries found',
+          details: Array.from(this.duplicates).map(duplicate => 
+            `Line ${duplicate.line}: ${duplicate.error} (${duplicate.timestamp || ''} - ${duplicate.tagRef || ''})`
+          )
+        };
+      }
+      
       // Only validate charges and tagHomeIDs for passes type
       if (type === 'passes') {
         // Validate charges
@@ -243,15 +274,6 @@ class CSVHandler {
             )
           };
         }
-      }
-
-      const hasDuplicates = !this.checkDuplicates(records);
-      if (hasDuplicates) {
-        return {
-          success: false,
-          error: 'Duplicate entries found',
-          duplicates: this.getDuplicates()
-        };
       }
 
       return {
