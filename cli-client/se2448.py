@@ -43,7 +43,7 @@ class InterTollCLI(cmd.Cmd):
         print("  se2448 passanalysis --stationop OP01 --tagop TAG01 --from 20220101 --to 20220131")
         print("  se2448 passescost --stationop OP01 --tagop TAG01 --from 20220101 --to 20220131")
         print("  se2448 chargesby --opid OP01 --from 20220101 --to 20220131")
-        print("  se2448 admin --addpasses --source /path/to/passes.json")
+        print("  se2448 admin --addpasses --source /path/to/passes.csv")
         print("  Type 'back' to return to main menu\n")
         
         while True:  # Main command loop
@@ -209,15 +209,16 @@ def parse_format_option(options):
         # Check for the format flag and potential typos
         if options[i].startswith('--') and 'format' in options[i].lower():
             if options[i] != '--format':
-                # Suggest the correct flag if there's a typo
-                raise ValueError(f"Unknown parameter '{options[i]}'. Did you mean '--format'?")
+                print("❌ Invalid format. Format must be either 'json' or 'csv'")
+                sys.exit(1)
             
             if i + 1 >= len(options):
-                raise ValueError("--format requires a value (json or csv)")
+                return 'csv'  # Default to csv if no value provided
                 
             format_type = options[i + 1].lower()
             if format_type not in ['json', 'csv']:
-                raise ValueError(f"Invalid format '{format_type}'. Format must be either 'json' or 'csv'")
+                print("❌ Invalid format. Format must be either 'json' or 'csv'")
+                sys.exit(1)
             return format_type
         i += 1
     return 'csv'  # default format when no --format argument is provided
@@ -793,34 +794,40 @@ def main():
             InterTollCLI().cmdloop()
         except KeyboardInterrupt:
             print("\nGoodbye!")
+        except Exception as e:
+            print(f"\n❌ Error: {str(e)}")
     else:
-        cli = InterTollCLI()
-        scope = args[0]
-        format_type = parse_format_option(args)  # Get format type
-        
-        if scope == 'healthcheck':
-            cli_healthcheck()
-        elif scope == 'resetpasses':
-            cli_resetpasses()
-        elif scope == 'resetstations':
-            cli_resetstations()
-        elif scope == 'tollstationpasses':
-            handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif scope == 'passanalysis':
-            handle_passanalysis(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif scope == 'passescost':
-            handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif scope == 'chargesby':
-            handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        elif scope == 'admin':
-            handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
-        else:
-            error_data = {
-                'status': 'failed',
-                'message': f"Unknown scope: '{scope}'",
-                'error': 'The command is not supported. Use --help to see available commands.'
-            }
-            output_result(error_data, format_type)
+        try:
+            cli = InterTollCLI()
+            scope = args[0]
+            format_type = parse_format_option(args)  # Get format type
+            
+            if scope == 'healthcheck':
+                cli_healthcheck()
+            elif scope == 'resetpasses':
+                cli_resetpasses()
+            elif scope == 'resetstations':
+                cli_resetstations()
+            elif scope == 'tollstationpasses':
+                handle_tollstation_passes(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif scope == 'passanalysis':
+                handle_passanalysis(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif scope == 'passescost':
+                handle_passescost(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif scope == 'chargesby':
+                handle_chargesby(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            elif scope == 'admin':
+                handle_admin(config.API_BASE_URL, config.ENDPOINTS, args[1:])
+            else:
+                error_data = {
+                    'status': 'failed',
+                    'message': f"Unknown scope: '{scope}'",
+                    'error': 'The command is not supported. Use --help to see available commands.'
+                }
+                output_result(error_data, format_type)
+        except Exception as e:
+            print(f"\n❌ Error: {str(e)}")
+            sys.exit(1)
 
 if __name__ == '__main__':
     main() 

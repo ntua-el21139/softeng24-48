@@ -8,7 +8,7 @@ load_dotenv()
 
 class APIClient:
     def __init__(self):
-        self.base_url = os.getenv('API_URL', API_BASE_URL)
+        self.base_url = os.getenv('API_URL', API_BASE_URL)  # Keep HTTPS
         self.session = requests.Session()
         # Optionally verify SSL certificates - for development, you may need to disable verification
         self.session.verify = False  # Only use in development
@@ -93,25 +93,73 @@ class APIClient:
             if not file_path.lower().endswith('.csv'):
                 raise ValueError("File must be a CSV file")
             
-            # Open the file in binary mode and create the files dict
-            with open(file_path, 'rb') as file:
+            # Read and preprocess the CSV file
+            import csv
+            from datetime import datetime
+            import tempfile
+            
+            # Create a temporary file to store the processed CSV
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv', newline='') as temp_file:
+                with open(file_path, 'r', newline='') as original_file:
+                    reader = csv.DictReader(original_file)
+                    writer = csv.DictWriter(temp_file, fieldnames=reader.fieldnames)
+                    writer.writeheader()
+                    
+                    for row in reader:
+                        # Convert timestamp from "d/m/yy HH:MM" to "YYYY-MM-DD HH:mm:ss"
+                        try:
+                            dt = datetime.strptime(row['timestamp'], '%d/%m/%y %H:%M')
+                            row['timestamp'] = dt.strftime('%Y-%m-%d %H:%M:%S')
+                        except ValueError as e:
+                            raise ValueError(f"Invalid timestamp format in CSV: {row['timestamp']}")
+                        writer.writerow(row)
+            
+            # Send the processed file
+            with open(temp_file.name, 'rb') as f:
                 files = {
-                    'file': (os.path.basename(file_path), file, 'text/csv')
+                    'file': (os.path.basename(file_path), f, 'text/csv')
                 }
                 
-                # Use the correct endpoint path from config with format parameter
-                url = f"{self.base_url}{ENDPOINTS['admin']['addpasses']}?format={format_type}"
+                url = f"{self.base_url}/api/admin/addpasses?format={format_type}"
                 
-                response = self.session.post(url, files=files)
+                # Set up the request with proper headers
+                headers = {
+                    'Accept': 'application/json'
+                }
+                
+                response = self.session.post(url, files=files, headers=headers)
+                if response.status_code != 200:
+                    error_data = response.json()
+                    if 'info' in error_data:
+                        raise Exception(error_data.get('info'))
+                    else:
+                        raise Exception(error_data.get('message', 'Unknown error occurred'))
+                
+                # Clean up the temporary file
+                try:
+                    os.unlink(temp_file.name)
+                except:
+                    pass  # Ignore cleanup errors
+                    
                 return response.json()
         
         except FileNotFoundError as e:
-            raise Exception(f"File error: {str(e)}")
+            raise Exception(f"❌ Error: {str(e)}")
         except ValueError as e:
-            raise Exception(f"Invalid file: {str(e)}")
+            raise Exception(f"❌ Error: {str(e)}")
         except requests.exceptions.RequestException as e:
-            raise Exception(f"API Error: {str(e)}")
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_data = e.response.json()
+                    if 'info' in error_data:
+                        raise Exception(f"❌ Error: {error_data['info']}")
+                    else:
+                        raise Exception(f"❌ Error: {error_data.get('message', str(e))}")
+                except:
+                    raise Exception(f"❌ Error: {str(e)}")
+            else:
+                raise Exception(f"❌ Error: {str(e)}")
         except Exception as e:
-            raise Exception(f"Error uploading passes: {str(e)}")
+            raise Exception(f"❌ Error: {str(e)}")
 
 # Remove the standalone command handling code 

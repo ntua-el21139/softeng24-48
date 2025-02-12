@@ -77,3 +77,8 @@ poetry.lock
 /dist
 /build
 /out
+
+# Frontend certificates
+front-end/.cert/
+front-end/.cert/*
+*.pem

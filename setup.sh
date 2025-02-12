@@ -55,6 +55,21 @@ install_node_dependencies "."
 install_node_dependencies "front-end"
 install_node_dependencies "back-end"
 
+# Generate SSL certificates for frontend
+echo -e "\nGenerating SSL certificates for frontend..."
+if [ -d "front-end" ]; then
+    cd front-end
+    mkdir -p .cert
+    if [ -f "generate-cert.sh" ]; then
+        chmod +x generate-cert.sh
+        ./generate-cert.sh
+        print_status "SSL certificates generated successfully"
+    else
+        print_warning "generate-cert.sh not found - you'll need to generate SSL certificates manually"
+    fi
+    cd ..
+fi
+
 # Setup environment files
 echo -e "\nSetting up environment files..."
 

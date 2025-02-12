@@ -47,6 +47,17 @@ if exist front-end\package.json (
         echo %RED%[✗]%NC% Failed to install additional frontend dependencies
         exit /b 1
     )
+
+    :: Generate SSL certificates
+    echo Generating SSL certificates...
+    if not exist .cert mkdir .cert
+    if exist generate-cert.sh (
+        bash generate-cert.sh
+        echo %GREEN%[✓]%NC% SSL certificates generated successfully
+    ) else (
+        echo %YELLOW%[!]%NC% generate-cert.sh not found - you'll need to generate SSL certificates manually
+    )
+
     echo %GREEN%[✓]%NC% Frontend Node.js dependencies installed successfully
     cd ..
 )
