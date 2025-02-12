@@ -350,9 +350,25 @@ def parse_tollstation_options(options):
 
     # Validate date format is YYYYMMDD
     try:
-        if not (len(date_from) == 8 and len(date_to) == 8):
+        # Check if dates are exactly 8 digits
+        if not (date_from.isdigit() and date_to.isdigit() and len(date_from) == 8 and len(date_to) == 8):
             raise ValueError("Dates must be in YYYYMMDD format")
+            
+        # Additional validation for year, month, and day ranges
+        year_from, month_from, day_from = int(date_from[:4]), int(date_from[4:6]), int(date_from[6:])
+        year_to, month_to, day_to = int(date_to[:4]), int(date_to[4:6]), int(date_to[6:])
+        
+        # Validate ranges
+        if not (1 <= month_from <= 12 and 1 <= month_to <= 12):
+            raise ValueError("Month must be between 01 and 12")
+        if not (1 <= day_from <= 31 and 1 <= day_to <= 31):
+            raise ValueError("Day must be between 01 and 31")
+        if not (2000 <= year_from <= 2100 and 2000 <= year_to <= 2100):
+            raise ValueError("Year must be between 2000 and 2100")
+            
         return station, date_from, date_to
+    except ValueError as e:
+        raise ValueError(str(e))
     except IndexError:
         raise ValueError("Dates must be in YYYYMMDD format")
 

@@ -106,12 +106,18 @@ class APIClient:
                     writer.writeheader()
                     
                     for row in reader:
-                        # Convert timestamp from "d/m/yy HH:MM" to "YYYY-MM-DD HH:mm:ss"
+                        # Convert timestamp to YYYY-MM-DD HH:mm:ss format
                         try:
-                            dt = datetime.strptime(row['timestamp'], '%d/%m/%y %H:%M')
+                            timestamp = row['timestamp']
+                            # Try parsing as YYYY-MM-DD HH:mm format first
+                            try:
+                                dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M')
+                            except ValueError:
+                                # If that fails, try d/m/yy HH:MM format
+                                dt = datetime.strptime(timestamp, '%d/%m/%y %H:%M')
                             row['timestamp'] = dt.strftime('%Y-%m-%d %H:%M:%S')
                         except ValueError as e:
-                            raise ValueError(f"Invalid timestamp format in CSV: {row['timestamp']}")
+                            raise ValueError(f"Invalid timestamp format in CSV: {timestamp}")
                         writer.writerow(row)
             
             # Send the processed file
