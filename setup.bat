@@ -39,6 +39,14 @@ if exist front-end\package.json (
         echo %RED%[✗]%NC% Failed to install frontend Node.js dependencies
         exit /b 1
     )
+    
+    :: Install additional frontend dependencies
+    echo Installing additional frontend dependencies...
+    call npm install react-helmet-async
+    if %ERRORLEVEL% NEQ 0 (
+        echo %RED%[✗]%NC% Failed to install additional frontend dependencies
+        exit /b 1
+    )
     echo %GREEN%[✓]%NC% Frontend Node.js dependencies installed successfully
     cd ..
 )

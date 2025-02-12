@@ -34,6 +34,12 @@ install_node_dependencies() {
     if [ -f "$dir/package.json" ]; then
         echo -e "\nInstalling Node.js dependencies in $dir..."
         if cd "$dir" && npm install; then
+            # Install additional frontend dependencies if in frontend directory
+            if [ "$dir" = "front-end" ]; then
+                echo -e "\nInstalling additional frontend dependencies..."
+                npm install react-helmet-async
+                print_status "Additional frontend dependencies installed"
+            fi
             print_status "Node.js dependencies in $dir installed successfully"
             cd - > /dev/null
             return 0
