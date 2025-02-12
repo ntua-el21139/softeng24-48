@@ -1,0 +1,993 @@
+{
+	"info": {
+		"_postman_id": "574faa38-f65f-40b3-a2c9-5dcec5c5de1f",
+		"name": "SOFTENG24-48",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "41943934",
+		"_collection_link": "https://softeng24-48.postman.co/workspace/softeng24-48-Workspace~7e3a83c0-f4b5-4981-8b4b-0139976cb51e/collection/41943934-574faa38-f65f-40b3-a2c9-5dcec5c5de1f?action=share&source=collection_link&creator=41943934"
+	},
+	"item": [
+		{
+			"name": "http://localhost:9115",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:9115",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "healthcheck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/admin/healthcheck",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"healthcheck"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "resetstations",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/admin/resetstations",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"resetstations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "resetpasses",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/admin/resetpasses",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"resetpasses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "addpasses",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "",
+							"type": "file",
+							"src": "/Users/christos/Downloads/passes-sample.csv"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:9115/api/admin/addpasses",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"addpasses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "addpasses2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "postman-cloud:///1efe86e6-c9d4-4ef0-b0a0-d7321dd6462f",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "https://localhost:9115/api/admin/addpasses",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"addpasses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "tollStationPasses",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/tollStationPasses/NO09/20220101/20220114",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"tollStationPasses",
+						"NO09",
+						"20220101",
+						"20220114"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "tollStationPasses2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/tollStationPasses/NO09/20220101/20220114?format=csv",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"tollStationPasses",
+						"NO09",
+						"20220101",
+						"20220114"
+					],
+					"query": [
+						{
+							"key": "format",
+							"value": "csv"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "tollStationPasses3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/tollStationPasses/XXX/20220101/20220114",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"tollStationPasses",
+						"XXX",
+						"20220101",
+						"20220114"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "tollStationPasses4",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/tollStationPasses/NO09/20220101/XXX",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"tollStationPasses",
+						"NO09",
+						"20220101",
+						"XXX"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passAnalysis",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9115/api/passAnalysis/NO/KO/2022-01-01/2022-01-14",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passAnalysis",
+						"NO",
+						"KO",
+						"2022-01-01",
+						"2022-01-14"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passAnalysis2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/passAnalysis/NO/KO/20220101/20220114?format=csv",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passAnalysis",
+						"NO",
+						"KO",
+						"20220101",
+						"20220114"
+					],
+					"query": [
+						{
+							"key": "format",
+							"value": "csv"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passAnalysis3",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/passAnalysis/NO/KO/20220101/20220114?format=csv",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passAnalysis",
+						"NO",
+						"KO",
+						"20220101",
+						"20220114"
+					],
+					"query": [
+						{
+							"key": "format",
+							"value": "csv"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passesCost",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/passesCost/NO/KO/20220101/20220114",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passesCost",
+						"NO",
+						"KO",
+						"20220101",
+						"20220114"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passesCost2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/passesCost/NO/KO/20220101/20220114?format=csv",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passesCost",
+						"NO",
+						"KO",
+						"20220101",
+						"20220114"
+					],
+					"query": [
+						{
+							"key": "format",
+							"value": "csv"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passesCost3",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/passesCost/NO/KO/20240101/20220114?format=csv",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passesCost",
+						"NO",
+						"KO",
+						"20240101",
+						"20220114"
+					],
+					"query": [
+						{
+							"key": "format",
+							"value": "csv"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "chargesBy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9115/api/chargesBy/NO/20220101/20220114",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"chargesBy",
+						"NO",
+						"20220101",
+						"20220114"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "chargesBy2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/chargesBy/NO/20220101/20220114?format=csv",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"chargesBy",
+						"NO",
+						"20220101",
+						"20220114"
+					],
+					"query": [
+						{
+							"key": "format",
+							"value": "csv"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "chargesBy3",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/chargesBy/NO/20250101/20250114?format=json",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"chargesBy",
+						"NO",
+						"20250101",
+						"20250114"
+					],
+					"query": [
+						{
+							"key": "format",
+							"value": "json"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetchUser",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/extra/fetchUser/admin/password",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"extra",
+						"fetchUser",
+						"admin",
+						"password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetchUser2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/extra/fetchUser/egnatia/password",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"extra",
+						"fetchUser",
+						"egnatia",
+						"password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "mapSupply",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/extra/mapSupply",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"extra",
+						"mapSupply"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UseCaseTwo",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/extra/useCaseTwo/NO",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"extra",
+						"useCaseTwo",
+						"NO"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deptOffsetting",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/deptOffsetting/AM/202201",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"deptOffsetting",
+						"AM",
+						"202201"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "error",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/error/NO/KO/20220101/20220114",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"error",
+						"NO",
+						"KO",
+						"20220101",
+						"20220114"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

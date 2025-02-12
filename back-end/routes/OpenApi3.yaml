@@ -11,8 +11,8 @@ paths:
     get:
       tags:
       - Misc
-      summary: http://localhost:9115
-      operationId: http://localhost:9115
+      summary: https://localhost:9115
+      operationId: https://localhost:9115
       parameters: []
       responses:
         '200':
